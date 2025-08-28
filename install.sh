@@ -7,10 +7,11 @@ TOOLS_DIR="$HOME/.tools"
 BASHRC="$HOME/.bashrc"
 ZSHRC="$HOME/.zshrc"
 
-echo "Setting up tools directory..."
+echo "Installing tools..."
 
-# Create directory structure
-mkdir -p "$TOOLS_DIR"/{bin,scripts,sources}
+# Run build script to compile everything
+echo "Building tools from sources..."
+./build.sh
 
 # Detect shell and add PATH export
 SHELL_RC=""
@@ -35,11 +36,7 @@ fi
 
 # Make scripts executable
 chmod +x "$TOOLS_DIR/scripts"/* 2>/dev/null || true
+chmod +x "$TOOLS_DIR/bin"/* 2>/dev/null || true
 
-echo "Setup complete!"
+echo "Installation complete!"
 echo "Run 'source $SHELL_RC' or restart your terminal to use tools."
-echo ""
-echo "Usage:"
-echo "  - Place scripts in ~/.tools/scripts/"
-echo "  - Add git submodules in ~/.tools/sources/"
-echo "  - Run './build.sh' to compile sources/"
