@@ -14,16 +14,21 @@ echo "Creating new repository..."
 REPO_OUTPUT=$(init-new-repo)
 echo "$REPO_OUTPUT"
 
-# Extract remote URL from the output (last line contains "Remote: https://github.com/user/repo")
+# Extract remote URL from output and get directory name from the last created directory
 REMOTE_URL=$(echo "$REPO_OUTPUT" | grep "Remote:" | sed 's/Remote: //')
-TOOL_DIR=$(basename "$PWD")
+LOCAL_DIR=$(ls -t | head -1)
 
 # Go back to tools root
 cd ..
 
 echo ""
 echo "Adding as submodule..."
-git submodule add "$REMOTE_URL" "sources/$TOOL_DIR"
+git submodule add "$REMOTE_URL.git" "sources/$LOCAL_DIR"
+
+echo ""
+echo "Committing submodule addition..."
+git add .gitmodules "sources/$LOCAL_DIR"
+git commit -m "feat: add $LOCAL_DIR submodule"
 
 echo ""
 echo "Tool created and added as submodule!"
