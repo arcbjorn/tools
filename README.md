@@ -5,47 +5,46 @@ A clean system for managing personal CLI utilities and scripts.
 ## Directory Structure
 
 ```
-~/.tools/
+~/tools/
 ├── bin/           # Compiled binaries (auto-generated)
 ├── scripts/       # Shell scripts (place directly here)
 ├── sources/       # Git repos/submodules for tools needing compilation
-└── build.sh       # Build script for sources/
+├── build.sh       # Build script for sources/
+└── init.sh        # Initial setup (adds PATH, runs build)
 ```
 
 ## Installation
 
-### 1. Add to PATH
-Add these lines to your `~/.bashrc` (or `~/.zshrc`):
-
+Run the initialization script (only needed once):
 ```bash
-# Tools directory
-export PATH="$HOME/.tools/bin:$HOME/.tools/scripts:$PATH"
+cd ~/tools
+./init.sh
 ```
 
-### 2. Reload shell
-```bash
-source ~/.bashrc
-```
+This will:
+- Build all tools from `sources/`
+- Add directories to your PATH
+- Make scripts executable
 
 ## Usage
 
 ### Adding Scripts
 Place shell scripts directly in `scripts/`:
 ```bash
-cp myscript.sh ~/.tools/scripts/
-chmod +x ~/.tools/scripts/myscript.sh
+cp myscript.sh ~/tools/scripts/
+chmod +x ~/tools/scripts/myscript.sh
 ```
 
 ### Adding Compiled Tools
 Add as git submodules in `sources/`:
 ```bash
-cd ~/.tools/sources
+cd ~/tools/sources
 git submodule add https://github.com/user/tool.git
 ```
 
 ### Building All Tools
 ```bash
-cd ~/.tools
+cd ~/tools
 ./build.sh
 ```
 
@@ -53,20 +52,20 @@ cd ~/.tools
 
 ### Working on submodules locally
 ```bash
-cd ~/.tools/sources/your-tool
+cd ~/tools/sources/your-tool
 # Make changes, commit, push as normal
 git add . && git commit -m "fix: some bug" && git push
 ```
 
 ### Using tools locally
 ```bash
-cd ~/.tools
+cd ~/tools
 ./build.sh  # Compile all tools from current local state
 ```
 
 ### Syncing parent repo with latest submodule versions
 ```bash
-cd ~/.tools
+cd ~/tools
 git submodule update --remote  # Update all submodules to latest
 git add . && git commit -m "chore: update all submodules" && git push
 ```

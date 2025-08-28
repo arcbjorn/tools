@@ -1,13 +1,12 @@
 #!/bin/bash
 
-# Tools directory installer
+# Initial setup for tools directory
 set -e
 
-TOOLS_DIR="$HOME/.tools"
 BASHRC="$HOME/.bashrc"
 ZSHRC="$HOME/.zshrc"
 
-echo "Installing tools..."
+echo "Initializing tools directory..."
 
 # Run build script to compile everything
 echo "Building tools from sources..."
@@ -25,18 +24,17 @@ else
 fi
 
 # Check if already added
-if ! grep -q "/.tools/bin" "$SHELL_RC"; then
+if ! grep -q "/tools/bin" "$SHELL_RC"; then
     echo "" >> "$SHELL_RC"
     echo "# Tools directory" >> "$SHELL_RC"
-    echo 'export PATH="$HOME/.tools/bin:$HOME/.tools/scripts:$PATH"' >> "$SHELL_RC"
+    echo 'export PATH="$HOME/tools/bin:$HOME/tools/scripts:$PATH"' >> "$SHELL_RC"
     echo "Added PATH export to $SHELL_RC"
 else
     echo "PATH already configured in $SHELL_RC"
 fi
 
 # Make scripts executable
-chmod +x "$TOOLS_DIR/scripts"/* 2>/dev/null || true
-chmod +x "$TOOLS_DIR/bin"/* 2>/dev/null || true
+chmod +x scripts/* 2>/dev/null || true
 
-echo "Installation complete!"
+echo "Initialization complete!"
 echo "Run 'source $SHELL_RC' or restart your terminal to use tools."
