@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Interactive script to initialize a new git repository
+set -e
+
+echo "Initialize New Repository"
+echo "========================"
+
+# Get remote repo name (user/repo or org/repo)
+read -p "Enter remote repository name (user/repo or org/repo): " REPO_NAME
+
+# Get local directory name
+read -p "Enter local directory name: " LOCAL_DIR_NAME
+
+# Confirm before proceeding
+echo ""
+echo "This will create:"
+echo "  Local directory: $LOCAL_DIR_NAME"
+echo "  Remote repository: $REPO_NAME"
+echo ""
+read -p "Proceed? (y/N): " confirm
+
+if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+    echo "Aborted."
+    exit 1
+fi
+
+echo ""
+echo "Creating repository..."
+
+# Execute the repository creation
+mkdir "$LOCAL_DIR_NAME" && \
+cd "$LOCAL_DIR_NAME" && \
+git init && \
+git branch -M master && \
+echo "# $REPO_NAME" > README.md && \
+init-claude-minimal && \
+git add . && \
+git commit -m "init(docs): add README" && \
+gh repo create "$REPO_NAME" --public --source=. --push
+
+echo ""
+echo "Repository created successfully!"
+echo "Local directory: $(pwd)"
+echo "Remote: https://github.com/$REPO_NAME"
