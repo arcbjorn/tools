@@ -9,8 +9,17 @@ echo "========================"
 # Get remote repo name (user/repo or org/repo)
 read -p "Enter remote repository name (user/repo or org/repo): " REPO_NAME
 
-# Get local directory name
+# Extract repo name from user/repo format for default local name
+DEFAULT_LOCAL_NAME=$(basename "$REPO_NAME")
+
+# Get local directory name with default
+echo -e "\033[90m(Press Enter to use: $DEFAULT_LOCAL_NAME)\033[0m"
 read -p "Enter local directory name: " LOCAL_DIR_NAME
+
+# Use default if empty
+if [ -z "$LOCAL_DIR_NAME" ]; then
+    LOCAL_DIR_NAME="$DEFAULT_LOCAL_NAME"
+fi
 
 # Confirm before proceeding
 echo ""
