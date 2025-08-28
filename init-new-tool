@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Create a new tool as a submodule in sources/
+set -e
+
+echo "Initialize New Tool in sources/"
+echo "=============================="
+
+# Change to sources directory
+cd sources
+
+# Run init-new-repo and capture the remote URL
+echo "Creating new repository..."
+REPO_OUTPUT=$(init-new-repo)
+echo "$REPO_OUTPUT"
+
+# Extract remote URL from the output (last line contains "Remote: https://github.com/user/repo")
+REMOTE_URL=$(echo "$REPO_OUTPUT" | grep "Remote:" | sed 's/Remote: //')
+TOOL_DIR=$(basename "$PWD")
+
+# Go back to tools root
+cd ..
+
+echo ""
+echo "Adding as submodule..."
+git submodule add "$REMOTE_URL" "sources/$TOOL_DIR"
+
+echo ""
+echo "Tool created and added as submodule!"
+echo "Run './build.sh' to compile the tool."
