@@ -1,3 +1,9 @@
 [submodule "sources/gh-activity-graph-sh"]
 	path = sources/gh-activity-graph-sh
 	url = https://github.com/arcbjorn/gh-activity-graph-sh.git
+[submodule "sources/sources"]
+	path = sources/sources
+	url = https://github.com/arcbjorn/test1.git
+[submodule "sources/test2"]
+	path = sources/test2
+	url = https://github.com/arcbjorn/test2.git
