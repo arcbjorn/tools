@@ -7,3 +7,6 @@
 [submodule "sources/test2"]
 	path = sources/test2
 	url = https://github.com/arcbjorn/test2.git
+[submodule "sources/agents-orchestrator"]
+	path = sources/agents-orchestrator
+	url = https://github.com/arcbjorn/agents-orchestrator.git
