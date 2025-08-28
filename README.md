@@ -11,6 +11,7 @@ A clean system for managing personal CLI utilities and scripts.
 ├── sources/       # Git repos/submodules for tools needing compilation
 ├── build.sh         # Build script for sources/
 ├── init.sh          # Initial setup (adds PATH, runs build)
+├── init-new-tool    # Create new tool as submodule in sources/
 └── set_permissions  # Fix permissions for scripts/executables
 ```
 
@@ -37,15 +38,17 @@ chmod +x ~/tools/scripts/myscript.sh
 ```
 
 ### Adding Compiled Tools
-Add as git submodules in `sources/`:
+
+#### Create new tool (recommended):
+```bash
+cd ~/tools
+./init-new-tool
+```
+
+#### Add existing remote repo as submodule:
 ```bash
 cd ~/tools
 git submodule add https://github.com/user/tool.git sources/tool-name
-```
-
-If you already have a local repo, add it as submodule:
-```bash
-git submodule add https://github.com/user/tool.git sources/existing-repo
 ```
 
 ### Building All Tools
