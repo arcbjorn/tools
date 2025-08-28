@@ -9,8 +9,9 @@ A clean system for managing personal CLI utilities and scripts.
 ├── bin/           # Compiled binaries (auto-generated)
 ├── scripts/       # Shell scripts (place directly here)
 ├── sources/       # Git repos/submodules for tools needing compilation
-├── build.sh       # Build script for sources/
-└── init.sh        # Initial setup (adds PATH, runs build)
+├── build.sh         # Build script for sources/
+├── init.sh          # Initial setup (adds PATH, runs build)
+└── set_permissions  # Fix permissions for scripts/executables
 ```
 
 ## Installation
@@ -46,6 +47,12 @@ git submodule add https://github.com/user/tool.git
 ```bash
 cd ~/tools
 ./build.sh
+```
+
+### Setting Permissions
+Fix permissions for all scripts and executables:
+```bash
+./set_permissions
 ```
 
 ## Development Workflow
