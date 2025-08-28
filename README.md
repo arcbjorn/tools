@@ -84,6 +84,10 @@ cd ~/tools
 git submodule update --remote  # Update all submodules to latest
 git add . && git commit -m "chore: update all submodules" && git push
 ```
+1 command:
+```sh
+git submodule update --remote && git add . && git commit -m "chore: update all submodules" && git push
+```
 
 ## Build Script
 The `build.sh` script automatically:
