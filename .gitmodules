@@ -1,0 +1,3 @@
+[submodule "sources/gh-activity-graph-sh"]
+	path = sources/gh-activity-graph-sh
+	url = https://github.com/arcbjorn/gh-activity-graph-sh.git
