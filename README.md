@@ -1,1 +1,61 @@
-# tools
+# Tools Directory Setup
+
+A clean system for managing personal CLI utilities and scripts.
+
+## Directory Structure
+
+```
+~/.tools/
+├── bin/           # Compiled binaries (auto-generated)
+├── scripts/       # Shell scripts (place directly here)
+├── sources/       # Git repos/submodules for tools needing compilation
+└── build.sh       # Build script for sources/
+```
+
+## Installation
+
+### 1. Add to PATH
+Add these lines to your `~/.bashrc` (or `~/.zshrc`):
+
+```bash
+# Tools directory
+export PATH="$HOME/.tools/bin:$HOME/.tools/scripts:$PATH"
+```
+
+### 2. Reload shell
+```bash
+source ~/.bashrc
+```
+
+## Usage
+
+### Adding Scripts
+Place shell scripts directly in `scripts/`:
+```bash
+cp myscript.sh ~/.tools/scripts/
+chmod +x ~/.tools/scripts/myscript.sh
+```
+
+### Adding Compiled Tools
+Add as git submodules in `sources/`:
+```bash
+cd ~/.tools/sources
+git submodule add https://github.com/user/tool.git
+```
+
+### Building All Tools
+```bash
+cd ~/.tools
+./build.sh
+```
+
+## Build Script
+The `build.sh` script automatically:
+- Detects language (Rust, Go, Zig, etc.)
+- Compiles projects in `sources/`
+- Places binaries in `bin/`
+
+## Notes
+- `scripts/` for direct shell scripts (no build needed)
+- `sources/` for projects requiring compilation
+- `bin/` is auto-generated, don't manually place files there
