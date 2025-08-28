@@ -39,8 +39,13 @@ chmod +x ~/tools/scripts/myscript.sh
 ### Adding Compiled Tools
 Add as git submodules in `sources/`:
 ```bash
-cd ~/tools/sources
-git submodule add https://github.com/user/tool.git
+cd ~/tools
+git submodule add https://github.com/user/tool.git sources/tool-name
+```
+
+If you already have a local repo, add it as submodule:
+```bash
+git submodule add https://github.com/user/tool.git sources/existing-repo
 ```
 
 ### Building All Tools
