@@ -49,6 +49,28 @@ cd ~/.tools
 ./build.sh
 ```
 
+## Development Workflow
+
+### Working on submodules locally
+```bash
+cd ~/.tools/sources/your-tool
+# Make changes, commit, push as normal
+git add . && git commit -m "fix: some bug" && git push
+```
+
+### Using tools locally
+```bash
+cd ~/.tools
+./build.sh  # Compile all tools from current local state
+```
+
+### Syncing parent repo with latest submodule versions
+```bash
+cd ~/.tools
+git submodule update --remote  # Update all submodules to latest
+git add . && git commit -m "chore: update all submodules" && git push
+```
+
 ## Build Script
 The `build.sh` script automatically:
 - Detects language (Rust, Go, Zig, etc.)
@@ -59,3 +81,4 @@ The `build.sh` script automatically:
 - `scripts/` for direct shell scripts (no build needed)
 - `sources/` for projects requiring compilation
 - `bin/` is auto-generated, don't manually place files there
+- Develop in submodules independently, sync parent repo when needed
