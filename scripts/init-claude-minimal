@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Initialize minimal Claude Code configuration
+set -e
+
+echo "Initializing minimal Claude Code setup..."
+
+# Create CLAUDE.md with commit instructions
+echo "COMMIT INSTRUCTIONS: use conventional commits guidelines, 1 GRANULAR COMMIT PER 1 GOAL, MESSAGE 50 CHARACTERS MAX, DESCRIPTION 70 CHARACTERS MAX" > CLAUDE.md
+
+# Create or update .gitignore
+if [ -f .gitignore ]; then
+    # Check if CLAUDE.md is already ignored
+    if ! grep -q "CLAUDE.md" .gitignore; then
+        echo "CLAUDE.md" >> .gitignore
+        echo "Added CLAUDE.md to existing .gitignore"
+    else
+        echo "CLAUDE.md already in .gitignore"
+    fi
+else
+    # Create new .gitignore
+    echo "CLAUDE.md" > .gitignore
+    echo "Created .gitignore with CLAUDE.md"
+fi
+
+echo "Claude Code minimal setup complete!"
+echo "- CLAUDE.md created with commit instructions"
+echo "- CLAUDE.md added to .gitignore"
