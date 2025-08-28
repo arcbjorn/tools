@@ -5,6 +5,7 @@ set -e
 
 echo "Building tools from sources..."
 
+mkdir -p bin
 cd sources
 
 for dir in */; do
