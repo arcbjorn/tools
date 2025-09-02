@@ -25,6 +25,9 @@ echo ""
 echo "5) Sync Submodules"
 echo "   Update all submodules to latest versions and commit changes"
 echo ""
+echo "6) Configure Shell"
+echo "   Configure shell to source tools configuration"
+echo ""
 echo -e "\033[90m(Press q to quit, Ctrl+C to exit)\033[0m"
 
 read -n1 -p "Enter your choice: " choice
@@ -56,12 +59,17 @@ case $choice in
         echo "Running sync-submodules..."
         ./tools_management/sync-submodules.sh
         ;;
+    6)
+        echo ""
+        echo "Running configure-shell..."
+        ./tools_management/configure-shell.sh
+        ;;
     q|Q)
         echo "Goodbye!"
         exit 0
         ;;
     *)
-        echo "Invalid choice. Please select 1, 2, 3, 4, 5, or q."
+        echo "Invalid choice. Please select 1, 2, 3, 4, 5, 6, or q."
         exit 1
         ;;
 esac
