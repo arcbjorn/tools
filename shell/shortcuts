@@ -21,6 +21,9 @@ alias ll='ls -la'
 alias la='ls -A'
 alias l='ls -GF'
 
+# Claude shortcuts
+alias cc='claude'
+
 # Show all shortcuts with syntax highlighting
 shortcuts() {
     echo ""
@@ -33,5 +36,9 @@ shortcuts() {
     
     echo "File Listing:"
     cat ~/tools/shell/shortcuts | grep "^alias l" | sort | bat --language=bash --style=plain --color=always
+    echo ""
+    
+    echo "Claude:"
+    cat ~/tools/shell/shortcuts | grep "^alias c" | sort | bat --language=bash --style=plain --color=always
     echo ""
 }
