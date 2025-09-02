@@ -22,6 +22,9 @@ echo ""
 echo "4) Create New Tool"
 echo "   Initialize a new tool repository and add as submodule"
 echo ""
+echo "5) Sync Submodules"
+echo "   Update all submodules to latest versions and commit changes"
+echo ""
 echo -e "\033[90m(Press q to quit, Ctrl+C to exit)\033[0m"
 
 read -n1 -p "Enter your choice: " choice
@@ -48,12 +51,17 @@ case $choice in
         echo "Running init-new-tool..."
         ./tools_management/init-new-tool.sh
         ;;
+    5)
+        echo ""
+        echo "Running sync-submodules..."
+        ./tools_management/sync-submodules.sh
+        ;;
     q|Q)
         echo "Goodbye!"
         exit 0
         ;;
     *)
-        echo "Invalid choice. Please select 1, 2, 3, 4, or q."
+        echo "Invalid choice. Please select 1, 2, 3, 4, 5, or q."
         exit 1
         ;;
 esac
