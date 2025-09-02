@@ -1,27 +1,23 @@
 #!/bin/bash
 
-# Tools Management Script
-# Provides an interactive interface for managing development tools
+# Tools Management Script - Interactive interface for managing development tools
 set -euo pipefail
 
 # Constants
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly TOOLS_MGMT_DIR="$SCRIPT_DIR/tools_management"
 
-# Gruvbox colors for output
-readonly GRV_BG='\033[48;2;40;40;40m'     # Dark background
-readonly GRV_FG='\033[38;2;235;219;178m'  # Light foreground
-readonly GRV_RED='\033[38;2;251;73;52m'   # Bright red
-readonly GRV_GREEN='\033[38;2;184;187;38m' # Bright green
-readonly GRV_YELLOW='\033[38;2;250;189;47m' # Bright yellow
-readonly GRV_BLUE='\033[38;2;131;165;152m' # Bright blue
-readonly GRV_PURPLE='\033[38;2;211;134;155m' # Bright purple
-readonly GRV_AQUA='\033[38;2;142;192;124m' # Bright aqua
-readonly GRV_ORANGE='\033[38;2;254;128;25m' # Bright orange
-readonly GRV_GRAY='\033[38;2;168;153;132m' # Gray
-readonly NC='\033[0m' # No Color
+# Theme-aware colors using terminal palette slots
+readonly RED='\033[38;5;1m'
+readonly GREEN='\033[38;5;2m'
+readonly YELLOW='\033[38;5;3m'
+readonly BLUE='\033[38;5;4m'
+readonly MAGENTA='\033[38;5;5m'
+readonly CYAN='\033[38;5;6m'
+readonly WHITE='\033[38;5;7m'
+readonly NC='\033[0m'
 
-# Menu configuration - associative arrays for better maintainability
+# Menu configuration
 declare -A MENU_ITEMS=(
     ["set-permissions"]="Set Permissions"
     ["init-tools"]="Initialize Tools"
@@ -51,26 +47,15 @@ declare -A MENU_SCRIPTS=(
     ["configure-shell"]="configure-shell.sh"
 )
 
-# Utility functions
-log_info() {
-    echo -e "${GRV_BLUE}ℹ${NC} $1"
-}
+# Logging functions
+log_info() { echo -e "${BLUE}ℹ${NC} $1"; }
+log_success() { echo -e "${GREEN}✓${NC} $1"; }
+log_error() { echo -e "${RED}✗${NC} $1" >&2; }
+log_warning() { echo -e "${YELLOW}⚠${NC} $1"; }
 
-log_success() {
-    echo -e "${GRV_GREEN}✓${NC} $1"
-}
-
-log_error() {
-    echo -e "${GRV_RED}✗${NC} $1" >&2
-}
-
-log_warning() {
-    echo -e "${GRV_YELLOW}⚠${NC} $1"
-}
-
-# Graceful exit handler
+# Exit handler
 cleanup_and_exit() {
-    echo -e "\n${GRV_ORANGE}Goodbye!${NC}"
+    echo -e "\n${YELLOW}Goodbye!${NC}"
     exit 0
 }
 
@@ -79,15 +64,15 @@ check_dependencies() {
     if ! command -v gum &> /dev/null; then
         log_error "'gum' is not installed."
         echo "Please install gum first:"
-        echo "  • On macOS: ${GRV_AQUA}brew install gum${NC}"
-        echo "  • On Ubuntu/Debian: ${GRV_AQUA}sudo mkdir -p /etc/apt/keyrings && curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg && echo 'deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *' | sudo tee /etc/apt/sources.list.d/charm.list && sudo apt update && sudo apt install gum${NC}"
-        echo "  • On Arch: ${GRV_AQUA}pacman -S gum${NC}"
+        echo "  • On macOS: ${CYAN}brew install gum${NC}"
+        echo "  • On Ubuntu/Debian: ${CYAN}sudo mkdir -p /etc/apt/keyrings && curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg && echo 'deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *' | sudo tee /etc/apt/sources.list.d/charm.list && sudo apt update && sudo apt install gum${NC}"
+        echo "  • On Arch: ${CYAN}pacman -S gum${NC}"
         echo "  • Or download from: https://github.com/charmbracelet/gum"
         exit 1
     fi
 }
 
-# Validate tools management directory
+# Validate environment
 validate_environment() {
     if [[ ! -d "$TOOLS_MGMT_DIR" ]]; then
         log_error "Tools management directory not found: $TOOLS_MGMT_DIR"
@@ -95,50 +80,38 @@ validate_environment() {
     fi
 }
 
-# Build menu options array for gum
+# Build menu options
 build_menu_options() {
     local -a options=()
-    local key
-    
     for key in "${!MENU_ITEMS[@]}"; do
         options+=("${MENU_ITEMS[$key]} - ${MENU_DESCRIPTIONS[$key]}")
     done
-    
     printf '%s\n' "${options[@]}" | sort
 }
 
 # Extract key from menu choice
 extract_key_from_choice() {
     local choice="$1"
-    local key
-    
     for key in "${!MENU_ITEMS[@]}"; do
         if [[ "$choice" == "${MENU_ITEMS[$key]} - ${MENU_DESCRIPTIONS[$key]}" ]]; then
             echo "$key"
             return 0
         fi
     done
-    
     return 1
 }
 
-# Execute script for given key
+# Execute script
 execute_script() {
     local key="$1"
     local script="${MENU_SCRIPTS[$key]}"
     local script_path="$TOOLS_MGMT_DIR/$script"
     
-    if [[ ! -f "$script_path" ]]; then
-        log_error "Script not found: $script_path"
-        return 1
-    fi
+    [[ ! -f "$script_path" ]] && { log_error "Script not found: $script_path"; return 1; }
     
     if [[ ! -x "$script_path" ]]; then
         log_warning "Script not executable, attempting to fix permissions..."
-        chmod +x "$script_path" || {
-            log_error "Failed to make script executable"
-            return 1
-        }
+        chmod +x "$script_path" || { log_error "Failed to make script executable"; return 1; }
     fi
     
     log_info "Running $script..."
@@ -147,55 +120,45 @@ execute_script() {
 
 # List available tools
 list_tools() {
-    echo -e "${GRV_PURPLE}All Available Tools:${NC}"
+    echo -e "${MAGENTA}All Available Tools:${NC}"
     echo "==================="
     echo ""
     
-    # List scripts
-    echo -e "${GRV_GREEN}Scripts (scripts/):${NC}"
-    if [[ -d "scripts" ]] && [[ -n "$(ls -A scripts 2>/dev/null)" ]]; then
-        find scripts -type f -executable -printf "  ${GRV_AQUA}%f${NC}\n" 2>/dev/null | sort || {
-            # Fallback for systems without -printf
+    echo -e "${GREEN}Scripts (scripts/):${NC}"
+    if [[ -d "scripts" && -n "$(ls -A scripts 2>/dev/null)" ]]; then
+        find scripts -type f -executable -printf "  ${CYAN}%f${NC}\n" 2>/dev/null | sort || {
             ls -1 scripts/ 2>/dev/null | while IFS= read -r file; do
-                if [[ -x "scripts/$file" ]]; then
-                    echo -e "  ${GRV_AQUA}$file${NC}"
-                fi
+                [[ -x "scripts/$file" ]] && echo -e "  ${CYAN}$file${NC}"
             done | sort
         }
     else
-        echo -e "  ${GRV_GRAY}No scripts found.${NC}"
+        echo -e "  ${WHITE}No scripts found.${NC}"
     fi
     
     echo ""
     
-    # List executables
-    echo -e "${GRV_GREEN}Executables (bin/):${NC}"
-    if [[ -d "bin" ]] && [[ -n "$(ls -A bin 2>/dev/null)" ]]; then
-        find bin -type f -executable -printf "  ${GRV_AQUA}%f${NC}\n" 2>/dev/null | sort || {
-            # Fallback for systems without -printf
+    echo -e "${GREEN}Executables (bin/):${NC}"
+    if [[ -d "bin" && -n "$(ls -A bin 2>/dev/null)" ]]; then
+        find bin -type f -executable -printf "  ${CYAN}%f${NC}\n" 2>/dev/null | sort || {
             ls -1 bin/ 2>/dev/null | while IFS= read -r file; do
-                if [[ -x "bin/$file" ]]; then
-                    echo -e "  ${GRV_AQUA}$file${NC}"
-                fi
+                [[ -x "bin/$file" ]] && echo -e "  ${CYAN}$file${NC}"
             done | sort
         }
     else
-        echo -e "  ${GRV_GRAY}No executables found. Run Build Tools to compile them.${NC}"
+        echo -e "  ${WHITE}No executables found. Run Build Tools to compile them.${NC}"
     fi
 }
 
 # Display header
 show_header() {
-    echo -e "${GRV_ORANGE}Tools Management${NC}"
-    echo -e "${GRV_GRAY}================${NC}"
+    echo -e "${YELLOW}Tools Management${NC}"
+    echo -e "${WHITE}================${NC}"
     echo ""
 }
 
-# Main menu display and selection
+# Main menu
 show_menu() {
-    local choice
-    local key
-    
+    local choice key
     mapfile -t menu_options < <(build_menu_options)
     
     choice=$(gum choose \
@@ -203,26 +166,18 @@ show_menu() {
         --cursor-prefix "→ " \
         --selected-prefix "✓ " \
         --unselected-prefix "  " \
-        --cursor.foreground="#fe8019" \
-        --header.foreground="#d3869b" \
-        --item.foreground="#ebdbb2" \
-        --selected.foreground="#b8bb26" \
+        --cursor.foreground="3" \
+        --header.foreground="5" \
+        --item.foreground="7" \
+        --selected.foreground="2" \
         "${menu_options[@]}")
     
-    # Handle empty selection
-    if [[ -z "$choice" ]]; then
-        cleanup_and_exit
-    fi
+    [[ -z "$choice" ]] && cleanup_and_exit
     
     echo ""
     
-    # Extract key and execute corresponding action
     if key=$(extract_key_from_choice "$choice"); then
-        if [[ "$key" == "view-tools" ]]; then
-            list_tools
-        else
-            execute_script "$key"
-        fi
+        [[ "$key" == "view-tools" ]] && list_tools || execute_script "$key"
     else
         log_error "Unknown menu choice: $choice"
         return 1
@@ -231,19 +186,14 @@ show_menu() {
 
 # Main function
 main() {
-    # Set up signal handlers
     trap cleanup_and_exit INT TERM
     
-    # Validate environment and dependencies
     check_dependencies
     validate_environment
     
-    # Show interface
     show_header
     show_menu
 }
 
 # Execute main function if script is run directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
-fi
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && main "$@"
