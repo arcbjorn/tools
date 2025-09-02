@@ -16,7 +16,7 @@ alias grh='git reset --hard'
 alias gst='git stash'
 alias gstp='git stash pop'
 
-# File listing shortcuts
+# File listing shortcuts (eza compatible)
 alias ll='ls -la'
 alias la='ls -A'
-alias l='ls -CF'
+alias l='ls -GF'
