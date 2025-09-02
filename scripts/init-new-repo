@@ -127,7 +127,7 @@ cd "$LOCAL_DIR_NAME" && \
 git init && \
 git branch -M master && \
 echo "# $REPO_NAME" > README.md && \
-init-claude-minimal && \
+init-assistants-minimal && \
 git add . && \
 git commit -m "init(docs): add README" && \
 gh repo create "$REPO_NAME" $REPO_VISIBILITY --source=. --push
