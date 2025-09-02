@@ -15,8 +15,8 @@ if [ -z "$auth_token" ]; then
 fi
 
 # Check if function already exists
-SHELL_RC="$HOME/tools/shell/rc"
-if grep -q "^glm()" "$SHELL_RC"; then
+SHELL_TEMP="$HOME/tools/shell/temp"
+if grep -q "^glm()" "$SHELL_TEMP"; then
     echo "glm() function already exists in shell configuration"
     read -p "Do you want to replace it? (y/N): " replace
     if [[ ! $replace =~ ^[Yy]$ ]]; then
@@ -24,11 +24,11 @@ if grep -q "^glm()" "$SHELL_RC"; then
         exit 0
     fi
     # Remove existing function
-    sed -i '/^glm()/,/^}/d' "$SHELL_RC"
+    sed -i '/^glm()/,/^}/d' "$SHELL_TEMP"
 fi
 
-# Add the function to shell/rc
-cat >> "$SHELL_RC" << EOF
+# Add the function to shell/temp
+cat >> "$SHELL_TEMP" << EOF
 
 # Claude GLM function
 glm() {
@@ -36,7 +36,7 @@ glm() {
 }
 EOF
 
-echo "✓ Added glm() function to shell configuration"
+echo "✓ Added glm() function to shell/temp configuration"
 echo "Run 'source ~/.bashrc' or start a new terminal to use it"
 echo
 echo "Usage: glm [claude arguments]"

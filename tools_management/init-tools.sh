@@ -11,6 +11,21 @@ echo "Initializing tools directory..."
 echo "Building tools from sources..."
 "$TOOLS_DIR/tools_management/build.sh"
 
+# Create shell/temp file for functions with secrets if it doesn't exist
+if [ ! -f "$TOOLS_DIR/shell/temp" ]; then
+    echo "Creating shell/temp for functions with secrets..."
+    cat > "$TOOLS_DIR/shell/temp" << 'EOF'
+# Temporary shell commands with secrets
+# This file contains functions that include secrets, tokens, or sensitive data
+# Add functions like glm() here that need authentication or contain secrets
+# 
+# Example:
+# glm() {
+#     ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic ANTHROPIC_AUTH_TOKEN=your_token claude "$@"
+# }
+EOF
+fi
+
 # Configure shell to source tools configuration
 echo "Configuring shell..."
 "$TOOLS_DIR/tools_management/configure-shell.sh"

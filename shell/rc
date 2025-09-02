@@ -3,3 +3,6 @@ export PATH="$HOME/tools/bin:$HOME/tools/scripts:$PATH"
 
 # Load custom shortcuts
 [ -f "$HOME/tools/shell/shortcuts" ] && source "$HOME/tools/shell/shortcuts"
+
+# Load temporary commands with secrets
+[ -f "$HOME/tools/shell/temp" ] && source "$HOME/tools/shell/temp"
