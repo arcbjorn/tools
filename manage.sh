@@ -12,8 +12,12 @@ echo ""
 echo "Select a tool to run:"
 echo "1) Set Permissions"
 echo "   Set appropriate permissions for all tools (755 for executables, 644 for docs)"
+echo ""
 echo "2) Initialize Tools"
 echo "   Initial setup for tools directory (build, configure shell)"
+echo ""
+echo "3) Build Tools"
+echo "   Compile all tools from sources directory"
 echo ""
 echo -e "\033[90m(Press q to quit, Ctrl+C to exit)\033[0m"
 
@@ -31,12 +35,17 @@ case $choice in
         echo "Running init-tools..."
         ./tools_management/init-tools.sh
         ;;
+    3)
+        echo ""
+        echo "Running build..."
+        ./tools_management/build.sh
+        ;;
     q|Q)
         echo "Goodbye!"
         exit 0
         ;;
     *)
-        echo "Invalid choice. Please select 1, 2, or q."
+        echo "Invalid choice. Please select 1, 2, 3, or q."
         exit 1
         ;;
 esac

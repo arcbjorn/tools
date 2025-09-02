@@ -11,7 +11,7 @@ echo "Initializing tools directory..."
 
 # Run build script to compile everything
 echo "Building tools from sources..."
-"$TOOLS_DIR/build.sh"
+"$TOOLS_DIR/tools_management/build.sh"
 
 # Detect shell and add PATH export
 SHELL_RC=""
