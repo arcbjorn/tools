@@ -1,41 +1,125 @@
 #!/bin/bash
 
-# Interactive script to initialize a new git repository
+# Script to initialize a new git repository
 set -e
+
+# Default values
+DEFAULT_PRIVATE=true
+INTERACTIVE=true
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --repo)
+            REPO_NAME="$2"
+            shift 2
+            ;;
+        --dir)
+            LOCAL_DIR_NAME="$2"
+            shift 2
+            ;;
+        --private)
+            DEFAULT_PRIVATE=true
+            shift
+            ;;
+        --public)
+            DEFAULT_PRIVATE=false
+            shift
+            ;;
+        --non-interactive)
+            INTERACTIVE=false
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: $0 [OPTIONS]"
+            echo "Options:"
+            echo "  --repo NAME         Remote repository name (user/repo or org/repo)"
+            echo "  --dir NAME          Local directory name"
+            echo "  --private           Create private repository (default)"
+            echo "  --public            Create public repository"
+            echo "  --non-interactive   Run without prompts"
+            echo "  --help, -h          Show this help message"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
 
 echo "Initialize New Repository"
 echo "========================"
 
 # Get remote repo name (user/repo or org/repo)
-read -p "Enter remote repository name (user/repo or org/repo): " REPO_NAME
+if [ -z "$REPO_NAME" ]; then
+    if [ "$INTERACTIVE" = false ]; then
+        echo "Error: --repo NAME is required in non-interactive mode"
+        exit 1
+    fi
+    read -p "Enter remote repository name (user/repo or org/repo): " REPO_NAME
+fi
 
 # Extract repo name from user/repo format for default local name
 DEFAULT_LOCAL_NAME=$(basename "$REPO_NAME")
 
+# Set repository visibility
+if [ "$DEFAULT_PRIVATE" = true ]; then
+    REPO_VISIBILITY="--private"
+    VISIBILITY_TEXT="private"
+else
+    REPO_VISIBILITY="--public"
+    VISIBILITY_TEXT="public"
+fi
+
+# Ask if repository should be private or public (interactive mode only)
+if [ "$INTERACTIVE" = true ]; then
+    echo -e "\033[90m(Press Enter to use: $VISIBILITY_TEXT)\033[0m"
+    read -p "Create private repository? (y/N): " PRIVATE_REPO
+    
+    # Update based on user input
+    if [[ ! "$PRIVATE_REPO" =~ ^[Yy]$ ]] && [ -n "$PRIVATE_REPO" ]; then
+        REPO_VISIBILITY="--public"
+        VISIBILITY_TEXT="public"
+    fi
+fi
+
 # Get local directory name with default
-echo -e "\033[90m(Press Enter to use: $DEFAULT_LOCAL_NAME)\033[0m"
-read -p "Enter local directory name: " LOCAL_DIR_NAME
-
-# Use default if empty
 if [ -z "$LOCAL_DIR_NAME" ]; then
-    LOCAL_DIR_NAME="$DEFAULT_LOCAL_NAME"
+    if [ "$INTERACTIVE" = true ]; then
+        echo -e "\033[90m(Press Enter to use: $DEFAULT_LOCAL_NAME)\033[0m"
+        read -p "Enter local directory name: " LOCAL_DIR_NAME
+    fi
+    
+    # Use default if empty
+    if [ -z "$LOCAL_DIR_NAME" ]; then
+        LOCAL_DIR_NAME="$DEFAULT_LOCAL_NAME"
+    fi
 fi
 
-# Confirm before proceeding
-echo ""
-echo "This will create:"
-echo "  Local directory: $LOCAL_DIR_NAME"
-echo "  Remote repository: $REPO_NAME"
-echo ""
-read -p "Proceed? (y/N): " confirm
-
-if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-    echo "Aborted."
-    exit 1
+# Confirm before proceeding (interactive mode only)
+if [ "$INTERACTIVE" = true ]; then
+    echo ""
+    echo "This will create:"
+    echo "  Local directory: $LOCAL_DIR_NAME"
+    echo "  Remote repository: $REPO_NAME"
+    echo "  Visibility: $VISIBILITY_TEXT"
+    echo ""
+    read -p "Proceed? (y/N): " confirm
+    
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        echo "Aborted."
+        exit 1
+    fi
+else
+    echo "Creating repository..."
+    echo "  Local directory: $LOCAL_DIR_NAME"
+    echo "  Remote repository: $REPO_NAME"
+    echo "  Visibility: $VISIBILITY_TEXT"
 fi
 
 echo ""
-echo "Creating repository..."
 
 # Execute the repository creation
 mkdir "$LOCAL_DIR_NAME" && \
@@ -46,7 +130,7 @@ echo "# $REPO_NAME" > README.md && \
 init-claude-minimal && \
 git add . && \
 git commit -m "init(docs): add README" && \
-gh repo create "$REPO_NAME" --public --source=. --push
+gh repo create "$REPO_NAME" $REPO_VISIBILITY --source=. --push
 
 echo ""
 echo "Repository created successfully!"
