@@ -10,11 +10,13 @@ echo "Tools Management"
 echo "================"
 echo ""
 echo "Select a tool to run:"
-echo "1) Set Permissions - Set appropriate permissions for all tools (755 for executables, 644 for docs)"
+echo "1) Set Permissions"
+echo "   Set appropriate permissions for all tools (755 for executables, 644 for docs)"
 echo ""
 echo -e "\033[90m(Press q to quit, Ctrl+C to exit)\033[0m"
 
-read -p "Enter your choice: " choice
+read -n1 -p "Enter your choice: " choice
+echo ""
 
 case $choice in
     1)
