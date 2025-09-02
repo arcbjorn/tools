@@ -76,10 +76,10 @@ fi
 # Ask if repository should be private or public (interactive mode only)
 if [ "$INTERACTIVE" = true ]; then
     echo -e "\033[90m(Press Enter to use: $VISIBILITY_TEXT)\033[0m"
-    read -p "Create private repository? (y/N): " PRIVATE_REPO
+    read -p "Create private repository? (Y/n): " PRIVATE_REPO
     
     # Update based on user input
-    if [[ ! "$PRIVATE_REPO" =~ ^[Yy]$ ]] && [ -n "$PRIVATE_REPO" ]; then
+    if [[ "$PRIVATE_REPO" =~ ^[Nn]$ ]]; then
         REPO_VISIBILITY="--public"
         VISIBILITY_TEXT="public"
     fi
