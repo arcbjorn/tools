@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Script to configure Claude GLM function in .bashrc
+# Script to configure Claude GLM function in shell/rc
 
-echo "This script will add a 'glm' function to your .bashrc that uses api.z.ai"
+echo "This script will add a 'glm' function to your shell configuration that uses api.z.ai"
 echo
 
 # Ask for auth token
@@ -15,19 +15,20 @@ if [ -z "$auth_token" ]; then
 fi
 
 # Check if function already exists
-if grep -q "^glm()" ~/.bashrc; then
-    echo "glm() function already exists in .bashrc"
+SHELL_RC="$HOME/tools/shell/rc"
+if grep -q "^glm()" "$SHELL_RC"; then
+    echo "glm() function already exists in shell configuration"
     read -p "Do you want to replace it? (y/N): " replace
     if [[ ! $replace =~ ^[Yy]$ ]]; then
         echo "Aborted."
         exit 0
     fi
     # Remove existing function
-    sed -i '/^glm()/,/^}/d' ~/.bashrc
+    sed -i '/^glm()/,/^}/d' "$SHELL_RC"
 fi
 
-# Add the function to .bashrc
-cat >> ~/.bashrc << EOF
+# Add the function to shell/rc
+cat >> "$SHELL_RC" << EOF
 
 # Claude GLM function
 glm() {
@@ -35,7 +36,7 @@ glm() {
 }
 EOF
 
-echo "✓ Added glm() function to .bashrc"
+echo "✓ Added glm() function to shell configuration"
 echo "Run 'source ~/.bashrc' or start a new terminal to use it"
 echo
 echo "Usage: glm [claude arguments]"
