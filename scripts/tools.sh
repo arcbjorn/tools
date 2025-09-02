@@ -1,0 +1,206 @@
+#!/bin/bash
+
+# Tools launcher - Interactive tool selector using gum
+set -e
+
+# Directories
+TOOLS_DIR="/home/arc/tools"
+BIN_DIR="$TOOLS_DIR/bin"
+SCRIPTS_DIR="$TOOLS_DIR/scripts"
+
+# Check if gum is available
+if ! command -v gum >/dev/null 2>&1; then
+    echo "Error: gum is required but not installed"
+    echo "Install with: pacman -S gum"
+    exit 1
+fi
+
+# Theme-aware colors using terminal palette slots (matching manage.sh)
+readonly RED='\033[38;5;1m'
+readonly GREEN='\033[38;5;2m'
+readonly YELLOW='\033[38;5;3m'
+readonly BLUE='\033[38;5;4m'
+readonly MAGENTA='\033[38;5;5m'
+readonly CYAN='\033[38;5;6m'
+readonly WHITE='\033[38;5;7m'
+readonly NC='\033[0m'
+
+# Get concise, informative descriptions
+get_description() {
+    local file="$1"
+    local basename=$(basename "$file")
+    
+    case "$basename" in
+        # Claude Code configuration
+        configure-cc-global) echo "Set global Claude Code settings (includeCoAuthoredBy: false)" ;;
+        configure-cc-ast-grep) echo "Add comprehensive ast-grep documentation to Claude memory" ;;
+        configure-cc-glm) echo "Configure Claude GLM integration" ;;
+        
+        # Repository management
+        attach-existing-repo) echo "Attach existing project directory to new remote repository" ;;
+        init-new-repo) echo "Create new repository with full configuration" ;;
+        init-assistants-minimal) echo "Add AGENTS.md and basic assistants configuration" ;;
+        
+        # Tools management
+        set-permissions) echo "Make scripts and binaries executable" ;;
+        sync-submodules) echo "Update all git submodules to latest versions" ;;
+        build) echo "Compile tools from sources directory" ;;
+        init-tools) echo "Complete setup: build, configure, permissions" ;;
+        configure-shell) echo "Setup shell to source tools configuration" ;;
+        init-new-tool) echo "Initialize new tool repository as submodule" ;;
+        
+        # This launcher
+        tools.sh) echo "Interactive tool launcher" ;;
+        
+        # Default for unknown tools
+        *) echo "$(basename "$file")" ;;
+    esac
+}
+
+# Build menu options
+build_menu() {
+    local options=()
+    local commands=()
+    
+    # Add executables from bin/
+    if [[ -d "$BIN_DIR" ]]; then
+        local bin_found=false
+        for file in "$BIN_DIR"/*; do
+            if [[ -f "$file" && -x "$file" ]]; then
+                if [[ "$bin_found" == false ]]; then
+                    options+=("── 📦 EXECUTABLES (bin/) ──")
+                    commands+=("")
+                    options+=("")  # Add spacing
+                    commands+=("")
+                    bin_found=true
+                fi
+                local basename=$(basename "$file")
+                local description=$(get_description "$file")
+                options+=("$basename - $description")
+                commands+=("$file")
+            fi
+        done
+    fi
+    
+    # Add scripts
+    if [[ -d "$SCRIPTS_DIR" ]]; then
+        local scripts_found=false
+        for file in "$SCRIPTS_DIR"/*; do
+            if [[ -f "$file" && -x "$file" ]]; then
+                local basename=$(basename "$file")
+                # Skip this script itself
+                if [[ "$basename" != "tools.sh" ]]; then
+                    if [[ "$scripts_found" == false ]]; then
+                        # Add spacing before scripts section if executables exist
+                        if [[ ${#options[@]} -gt 0 ]]; then
+                            options+=("")
+                            commands+=("")
+                        fi
+                        options+=("── 📜 SCRIPTS (scripts/) ──")
+                        commands+=("")
+                        options+=("")  # Add spacing
+                        commands+=("")
+                        scripts_found=true
+                    fi
+                    local description=$(get_description "$file")
+                    options+=("$basename - $description")
+                    commands+=("$file")
+                fi
+            fi
+        done
+    fi
+    
+    # Store arrays in global variables for access in main function
+    MENU_OPTIONS=("${options[@]}")
+    MENU_COMMANDS=("${commands[@]}")
+}
+
+# Main function
+main() {
+    # Build the menu
+    build_menu
+    
+    if [[ ${#MENU_OPTIONS[@]} -eq 0 ]]; then
+        gum style --foreground 1 "No tools found in bin/ or scripts/ directories"
+        exit 1
+    fi
+    
+    while true; do
+        # Clear screen and show header
+        clear
+        gum style \
+            --foreground 6 --border-foreground 6 --border double \
+            --align center --width 50 --margin "1 2" --padding "2 4" \
+            'Tools Launcher' 'Select a tool to run'
+        
+        # Show the menu
+        local selected=$(printf '%s\n' "${MENU_OPTIONS[@]}" | gum choose \
+            --header "Select a tool to run:" \
+            --cursor-prefix "→ " \
+            --selected-prefix "✓ " \
+            --unselected-prefix "  " \
+            --cursor.foreground="3" \
+            --header.foreground="5" \
+            --item.foreground="7" \
+            --selected.foreground="2" \
+            --height 20)
+        
+        # Handle selection
+        if [[ -z "$selected" ]]; then
+            gum style --foreground 8 "Goodbye!"
+            exit 0
+        fi
+        
+        # Find the corresponding command
+        local command=""
+        for i in "${!MENU_OPTIONS[@]}"; do
+            if [[ "${MENU_OPTIONS[i]}" == "$selected" ]]; then
+                command="${MENU_COMMANDS[i]}"
+                break
+            fi
+        done
+        
+        # Skip header rows
+        if [[ -z "$command" ]]; then
+            continue
+        fi
+        
+        # Get tool name for display
+        local tool_name=$(basename "$command")
+        
+        echo
+        gum style --foreground 5 "Running: $tool_name"
+        gum style --foreground 8 "Command: $command"
+        echo
+        
+        # Ask for arguments
+        local args=""
+        if gum confirm "Add arguments?"; then
+            gum style --foreground 8 "Tip: Most tools support --help or -h flag"
+            args=$(gum input --placeholder "Enter arguments (optional)")
+        fi
+        
+        # Run the command
+        echo
+        gum style --foreground 2 "Executing..."
+        echo "────────────────────────────────────────"
+        
+        if [[ -n "$args" ]]; then
+            $command $args
+        else
+            $command
+        fi
+        
+        echo
+        echo "────────────────────────────────────────"
+        gum style --foreground 8 "Command completed."
+        
+        # Ask if user wants to continue
+        if ! gum confirm "Run another tool?"; then
+            gum style --foreground 8 "Goodbye!"
+            exit 0
+        fi
+    done
+}
+
+main
