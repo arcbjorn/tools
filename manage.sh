@@ -34,7 +34,7 @@ declare -A MENU_ITEMS=(
 
 declare -A MENU_DESCRIPTIONS=(
     ["set-permissions"]="Make scripts and binaries executable"
-    ["init-tools"]="Complete setup (build, configure, permissions)"
+    ["init-tools"]="Complete setup (build, configure, temp file, permissions)"
     ["build-tools"]="Compile tools from sources/ directory"
     ["create-tool"]="Initialize new tool repository as submodule"
     ["sync-submodules"]="Update all submodules to latest versions"
