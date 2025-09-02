@@ -1,0 +1,185 @@
+#!/bin/bash
+
+# Script to attach an existing project directory to a new remote repository
+set -e
+
+# Default values
+DEFAULT_PRIVATE=true
+INTERACTIVE=true
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --repo)
+            REPO_NAME="$2"
+            shift 2
+            ;;
+        --dir)
+            PROJECT_DIR="$2"
+            shift 2
+            ;;
+        --private)
+            DEFAULT_PRIVATE=true
+            shift
+            ;;
+        --public)
+            DEFAULT_PRIVATE=false
+            shift
+            ;;
+        --non-interactive)
+            INTERACTIVE=false
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: $0 [OPTIONS]"
+            echo "Options:"
+            echo "  --repo NAME         Remote repository name (user/repo or org/repo)"
+            echo "  --dir PATH          Path to existing project directory"
+            echo "  --private           Create private repository (default)"
+            echo "  --public            Create public repository"
+            echo "  --non-interactive   Run without prompts"
+            echo "  --help, -h          Show this help message"
+            echo ""
+            echo "This script will:"
+            echo "  1. Clean up existing .git directory"
+            echo "  2. Initialize git repository with master branch"
+            echo "  3. Add assistants configuration if missing"
+            echo "  4. Create remote repository and push"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+echo "Attach Existing Project to New Repository"
+echo "========================================"
+
+# Get project directory
+if [ -z "$PROJECT_DIR" ]; then
+    if [ "$INTERACTIVE" = false ]; then
+        echo "Error: --dir PATH is required in non-interactive mode"
+        exit 1
+    fi
+    read -p "Enter path to existing project directory: " PROJECT_DIR
+fi
+
+# Validate project directory exists
+if [ ! -d "$PROJECT_DIR" ]; then
+    echo "Error: Directory '$PROJECT_DIR' does not exist"
+    exit 1
+fi
+
+# Convert to absolute path
+PROJECT_DIR=$(realpath "$PROJECT_DIR")
+PROJECT_NAME=$(basename "$PROJECT_DIR")
+
+# Get remote repo name (user/repo or org/repo)
+if [ -z "$REPO_NAME" ]; then
+    if [ "$INTERACTIVE" = false ]; then
+        echo "Error: --repo NAME is required in non-interactive mode"
+        exit 1
+    fi
+    echo -e "\033[90m(Press Enter to use: $(whoami)/$PROJECT_NAME)\033[0m"
+    read -p "Enter remote repository name (user/repo or org/repo): " REPO_NAME
+    
+    # Use default if empty
+    if [ -z "$REPO_NAME" ]; then
+        REPO_NAME="$(whoami)/$PROJECT_NAME"
+    fi
+fi
+
+# Set repository visibility
+if [ "$DEFAULT_PRIVATE" = true ]; then
+    REPO_VISIBILITY="--private"
+    VISIBILITY_TEXT="private"
+else
+    REPO_VISIBILITY="--public"
+    VISIBILITY_TEXT="public"
+fi
+
+# Ask if repository should be private or public (interactive mode only)
+if [ "$INTERACTIVE" = true ]; then
+    echo -e "\033[90m(Press Enter to use: $VISIBILITY_TEXT)\033[0m"
+    read -p "Create private repository? (Y/n): " PRIVATE_REPO
+    
+    # Update based on user input
+    if [[ "$PRIVATE_REPO" =~ ^[Nn]$ ]]; then
+        REPO_VISIBILITY="--public"
+        VISIBILITY_TEXT="public"
+    fi
+fi
+
+# Show what will happen (interactive mode only)
+if [ "$INTERACTIVE" = true ]; then
+    echo ""
+    echo "This will:"
+    echo "  1. Remove existing .git directory in: $PROJECT_DIR"
+    echo "  2. Initialize fresh git repository with master branch"
+    echo "  3. Add assistants configuration if missing"
+    echo "  4. Create remote repository: $REPO_NAME"
+    echo "  5. Push to remote as $VISIBILITY_TEXT repository"
+    echo ""
+    
+    if [ -d "$PROJECT_DIR/.git" ]; then
+        echo -e "\033[33mWarning: This will delete the existing .git directory and all git history!\033[0m"
+        echo ""
+    fi
+    
+    read -p "Proceed? (y/N): " confirm
+    
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        echo "Aborted."
+        exit 1
+    fi
+else
+    echo "Attaching project to repository..."
+    echo "  Project directory: $PROJECT_DIR"
+    echo "  Remote repository: $REPO_NAME"
+    echo "  Visibility: $VISIBILITY_TEXT"
+fi
+
+echo ""
+
+# Execute the attachment process
+cd "$PROJECT_DIR"
+
+# Remove existing git directory if it exists
+if [ -d ".git" ]; then
+    echo "Removing existing .git directory..."
+    rm -rf .git
+fi
+
+# Initialize fresh git repository
+echo "Initializing git repository..."
+git init
+git branch -M master
+
+# Add assistants configuration if it doesn't exist
+if [ ! -f "AGENTS.md" ]; then
+    echo "Adding assistants configuration..."
+    init-assistants-minimal
+fi
+
+# Add README if it doesn't exist
+if [ ! -f "README.md" ]; then
+    echo "Creating README.md..."
+    echo "# $PROJECT_NAME" > README.md
+fi
+
+# Stage and commit all files
+echo "Staging and committing files..."
+git add .
+git commit -m "init(repo): attach existing project to remote"
+
+# Create remote repository and push
+echo "Creating remote repository and pushing..."
+gh repo create "$REPO_NAME" $REPO_VISIBILITY --source=. --push
+
+echo ""
+echo "Project successfully attached to repository!"
+echo "Local directory: $(pwd)"
+echo "Remote: https://github.com/$REPO_NAME"
