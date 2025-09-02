@@ -1,0 +1,4 @@
+# Tools directory configuration
+export PATH="$HOME/tools/bin:$HOME/tools/scripts:$PATH"
+
+# Add your shell shortcuts here

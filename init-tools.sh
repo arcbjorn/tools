@@ -24,13 +24,14 @@ else
 fi
 
 # Check if already added
-if ! grep -q "/tools/bin" "$SHELL_RC"; then
+SOURCE_LINE="[ -f \"\$HOME/tools/shell/rc\" ] && source \"\$HOME/tools/shell/rc\""
+if ! grep -qF "$SOURCE_LINE" "$SHELL_RC"; then
     echo "" >> "$SHELL_RC"
     echo "# Tools directory" >> "$SHELL_RC"
-    echo 'export PATH="$HOME/tools/bin:$HOME/tools/scripts:$PATH"' >> "$SHELL_RC"
-    echo "Added PATH export to $SHELL_RC"
+    echo "$SOURCE_LINE" >> "$SHELL_RC"
+    echo "Added tools configuration sourcing to $SHELL_RC"
 else
-    echo "PATH already configured in $SHELL_RC"
+    echo "Tools configuration already configured in $SHELL_RC"
 fi
 
 # Make scripts executable
