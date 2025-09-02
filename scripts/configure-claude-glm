@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Script to configure Claude GLM function in .bashrc
+
+echo "This script will add a 'glm' function to your .bashrc that uses api.z.ai"
+echo
+
+# Ask for auth token
+read -s -p "Enter your ANTHROPIC_AUTH_TOKEN: " auth_token
+echo
+
+if [ -z "$auth_token" ]; then
+    echo "Error: Auth token cannot be empty"
+    exit 1
+fi
+
+# Check if function already exists
+if grep -q "^glm()" ~/.bashrc; then
+    echo "glm() function already exists in .bashrc"
+    read -p "Do you want to replace it? (y/N): " replace
+    if [[ ! $replace =~ ^[Yy]$ ]]; then
+        echo "Aborted."
+        exit 0
+    fi
+    # Remove existing function
+    sed -i '/^glm()/,/^}/d' ~/.bashrc
+fi
+
+# Add the function to .bashrc
+cat >> ~/.bashrc << EOF
+
+# Claude GLM function
+glm() {
+    ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic ANTHROPIC_AUTH_TOKEN=$auth_token claude "\$@"
+}
+EOF
+
+echo "✓ Added glm() function to .bashrc"
+echo "Run 'source ~/.bashrc' or start a new terminal to use it"
+echo
+echo "Usage: glm [claude arguments]"
+echo "Example: glm --help"
+echo
+echo "Documentation: https://docs.z.ai/scenario-example/develop-tools/claude"
