@@ -24,7 +24,7 @@ case $choice in
     1)
         echo ""
         echo "Running set_permissions..."
-        ./tools_management/set_permissions
+        ./tools_management/set-permissions.sh
         ;;
     2)
         echo ""

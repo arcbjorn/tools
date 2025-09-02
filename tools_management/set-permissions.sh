@@ -23,7 +23,7 @@ fi
 # Make build and init scripts executable (755)
 chmod 755 "$TOOLS_DIR/build.sh" 2>/dev/null || true
 chmod 755 "$TOOLS_DIR/init-tools.sh" 2>/dev/null || true
-chmod 755 "$TOOLS_DIR/tools_management/set_permissions" 2>/dev/null || true
+chmod 755 "$TOOLS_DIR/tools_management/set-permissions.sh" 2>/dev/null || true
 
 # Keep README and other docs readable (644 - owner read/write, group/others read-only)
 chmod 644 "$TOOLS_DIR/README.md" 2>/dev/null || true
