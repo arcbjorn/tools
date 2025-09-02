@@ -31,7 +31,7 @@ cat >> ~/.bashrc << EOF
 
 # Claude GLM function
 glm() {
-    ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic ANTHROPIC_AUTH_TOKEN=$auth_token claude "\$@"
+    ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic ANTHROPIC_AUTH_TOKEN=$auth_token ANTHROPIC_MODEL="glm-4.5" claude "\$@"
 }
 EOF
 
