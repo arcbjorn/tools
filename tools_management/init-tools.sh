@@ -15,8 +15,9 @@ echo "Building tools from sources..."
 echo "Configuring shell..."
 "$TOOLS_DIR/tools_management/configure-shell.sh"
 
-# Make scripts executable
-chmod +x "$TOOLS_DIR/scripts"/* 2>/dev/null || true
+# Set all permissions
+echo "Setting permissions..."
+"$TOOLS_DIR/tools_management/set-permissions.sh"
 
 echo "Initialization complete!"
 echo "Run 'source ~/.bashrc' or 'source ~/.zshrc' or restart your terminal to use tools."
