@@ -28,6 +28,9 @@ echo ""
 echo "6) Configure Shell"
 echo "   Configure shell to source tools configuration"
 echo ""
+echo "7) View All Tools"
+echo "   List both scripts and executables"
+echo ""
 echo -e "\033[90m(Press q to quit, Ctrl+C to exit)\033[0m"
 
 read -n1 -p "Enter your choice: " choice
@@ -64,12 +67,41 @@ case $choice in
         echo "Running configure-shell..."
         ./tools_management/configure-shell.sh
         ;;
+    7)
+        echo ""
+        echo "All Available Tools:"
+        echo "==================="
+        echo ""
+        echo "Scripts (scripts/):"
+        if [ -d "scripts" ] && [ "$(ls -A scripts 2>/dev/null)" ]; then
+            ls -la scripts/ | grep -v "^total" | tail -n +2 | while read -r line; do
+                filename=$(echo "$line" | awk '{print $9}')
+                if [ "$filename" != "." ] && [ "$filename" != ".." ]; then
+                    echo "  $filename"
+                fi
+            done
+        else
+            echo "  No scripts found."
+        fi
+        echo ""
+        echo "Executables (bin/):"
+        if [ -d "bin" ] && [ "$(ls -A bin 2>/dev/null)" ]; then
+            ls -la bin/ | grep -v "^total" | tail -n +2 | while read -r line; do
+                filename=$(echo "$line" | awk '{print $9}')
+                if [ "$filename" != "." ] && [ "$filename" != ".." ]; then
+                    echo "  $filename"
+                fi
+            done
+        else
+            echo "  No executables found. Run option 3 to build tools."
+        fi
+        ;;
     q|Q)
         echo "Goodbye!"
         exit 0
         ;;
     *)
-        echo "Invalid choice. Please select 1, 2, 3, 4, 5, 6, or q."
+        echo "Invalid choice. Please select 1-7 or q."
         exit 1
         ;;
 esac
