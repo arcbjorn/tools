@@ -1,7 +1,22 @@
 # Shell shortcuts and aliases
 
-# Add your custom shortcuts here
-# Examples:
-# alias ll='ls -la'
-# alias gs='git status'
-# alias gd='git diff'
+# Git shortcuts
+alias gs='git status'
+alias gd='git diff'
+alias ga='git add'
+alias gc='git commit'
+alias gp='git push'
+alias gl='git log --oneline'
+alias gb='git branch'
+alias gco='git checkout'
+alias gcb='git checkout -b'
+alias gm='git merge'
+alias grs='git reset --soft'
+alias grh='git reset --hard'
+alias gst='git stash'
+alias gstp='git stash pop'
+
+# File listing shortcuts
+alias ll='ls -la'
+alias la='ls -A'
+alias l='ls -CF'
