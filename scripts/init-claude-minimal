@@ -15,6 +15,9 @@ echo "COMMIT INSTRUCTIONS: use conventional commits guidelines, 1 GRANULAR COMMI
 - **Svelte**: \`npx sv create my-app\`
 - **Rust**: \`cargo new\`, \`cargo add\`
 - **Zig**: \`zig init\`
+- **Ruby**: \`bundle init\`, \`bundle add gem_name\`
+- **Ruby on Rails**: \`rails new my_app\`, \`rails generate scaffold ModelName\`
+- **Elixir**: \`mix new my_app\`, \`mix phx.new my_app\` (for Phoenix)
 - **Never manually create package.json or go.mod files**
 - **ALWAYS use official scaffolding tools\`" >> CLAUDE.md
 
