@@ -3,6 +3,7 @@
 # Initial setup for tools directory
 set -e
 
+TOOLS_DIR="$HOME/tools"
 BASHRC="$HOME/.bashrc"
 ZSHRC="$HOME/.zshrc"
 
@@ -10,7 +11,7 @@ echo "Initializing tools directory..."
 
 # Run build script to compile everything
 echo "Building tools from sources..."
-./build.sh
+"$TOOLS_DIR/build.sh"
 
 # Detect shell and add PATH export
 SHELL_RC=""
@@ -35,7 +36,7 @@ else
 fi
 
 # Make scripts executable
-chmod +x scripts/* 2>/dev/null || true
+chmod +x "$TOOLS_DIR/scripts"/* 2>/dev/null || true
 
 echo "Initialization complete!"
 echo "Run 'source $SHELL_RC' or restart your terminal to use tools."
