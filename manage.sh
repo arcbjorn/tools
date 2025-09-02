@@ -19,6 +19,9 @@ echo ""
 echo "3) Build Tools"
 echo "   Compile all tools from sources directory"
 echo ""
+echo "4) Create New Tool"
+echo "   Initialize a new tool repository and add as submodule"
+echo ""
 echo -e "\033[90m(Press q to quit, Ctrl+C to exit)\033[0m"
 
 read -n1 -p "Enter your choice: " choice
@@ -40,12 +43,17 @@ case $choice in
         echo "Running build..."
         ./tools_management/build.sh
         ;;
+    4)
+        echo ""
+        echo "Running init-new-tool..."
+        ./tools_management/init-new-tool.sh
+        ;;
     q|Q)
         echo "Goodbye!"
         exit 0
         ;;
     *)
-        echo "Invalid choice. Please select 1, 2, 3, or q."
+        echo "Invalid choice. Please select 1, 2, 3, 4, or q."
         exit 1
         ;;
 esac

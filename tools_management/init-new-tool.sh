@@ -3,11 +3,13 @@
 # Create a new tool as a submodule in sources/
 set -e
 
+TOOLS_DIR="$HOME/tools"
+
 echo "Initialize New Tool in sources/"
 echo "=============================="
 
 # Change to sources directory
-cd sources
+cd "$TOOLS_DIR/sources"
 
 # Run init-new-repo and capture the remote URL
 echo "Creating new repository..."
@@ -19,7 +21,7 @@ REMOTE_URL=$(echo "$REPO_OUTPUT" | grep "Remote:" | sed 's/Remote: //')
 LOCAL_DIR=$(ls -t | head -1)
 
 # Go back to tools root
-cd ..
+cd "$TOOLS_DIR"
 
 echo ""
 echo "Adding as submodule..."
@@ -32,4 +34,4 @@ git commit -m "feat: add $LOCAL_DIR submodule"
 
 echo ""
 echo "Tool created and added as submodule!"
-echo "Run './build.sh' to compile the tool."
+echo "Run manage.sh option 3 to compile the tool."
