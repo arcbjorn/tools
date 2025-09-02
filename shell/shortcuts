@@ -20,3 +20,18 @@ alias gstp='git stash pop'
 alias ll='ls -la'
 alias la='ls -A'
 alias l='ls -GF'
+
+# Show all shortcuts with syntax highlighting
+shortcuts() {
+    echo ""
+    echo "=== Shell Shortcuts ==="
+    echo ""
+    
+    echo "Git Commands:"
+    cat ~/tools/shell/shortcuts | grep "^alias g" | sort | bat --language=bash --style=plain --color=always
+    echo ""
+    
+    echo "File Listing:"
+    cat ~/tools/shell/shortcuts | grep "^alias l" | sort | bat --language=bash --style=plain --color=always
+    echo ""
+}
