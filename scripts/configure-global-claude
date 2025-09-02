@@ -1,0 +1,120 @@
+#!/bin/bash
+
+# Script to configure global Claude settings
+set -e
+
+INTERACTIVE=true
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --non-interactive)
+            INTERACTIVE=false
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: $0 [OPTIONS]"
+            echo "Options:"
+            echo "  --non-interactive   Run without prompts"
+            echo "  --help, -h          Show this help message"
+            echo ""
+            echo "This script configures global Claude settings:"
+            echo "  - Sets includeCoAuthoredBy: false"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+echo "Configure Global Claude Settings"
+echo "==============================="
+
+# Determine Claude config directory
+CLAUDE_CONFIG_DIR="$HOME/.claude"
+CLAUDE_CONFIG_FILE="$CLAUDE_CONFIG_DIR/settings.json"
+
+# Create config directory if it doesn't exist
+if [ ! -d "$CLAUDE_CONFIG_DIR" ]; then
+    echo "Creating Claude config directory: $CLAUDE_CONFIG_DIR"
+    mkdir -p "$CLAUDE_CONFIG_DIR"
+fi
+
+# Check if config file exists and read current settings
+if [ -f "$CLAUDE_CONFIG_FILE" ]; then
+    echo "Found existing config file: $CLAUDE_CONFIG_FILE"
+    
+    # Check if includeCoAuthoredBy is already set to false
+    if command -v jq >/dev/null 2>&1; then
+        CURRENT_VALUE=$(jq -r '.includeCoAuthoredBy // empty' "$CLAUDE_CONFIG_FILE" 2>/dev/null || echo "")
+        if [ "$CURRENT_VALUE" = "false" ]; then
+            echo "includeCoAuthoredBy is already set to false"
+            if [ "$INTERACTIVE" = true ]; then
+                read -p "Continue anyway? (y/N): " confirm
+                if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+                    echo "Aborted."
+                    exit 0
+                fi
+            else
+                echo "No changes needed."
+                exit 0
+            fi
+        fi
+    fi
+else
+    echo "Creating new config file: $CLAUDE_CONFIG_FILE"
+fi
+
+# Confirm before proceeding (interactive mode only)
+if [ "$INTERACTIVE" = true ]; then
+    echo ""
+    echo "This will set the following global Claude setting:"
+    echo "  includeCoAuthoredBy: false"
+    echo ""
+    read -p "Proceed? (Y/n): " confirm
+    
+    if [[ "$confirm" =~ ^[Nn]$ ]]; then
+        echo "Aborted."
+        exit 1
+    fi
+fi
+
+echo ""
+echo "Configuring global Claude settings..."
+
+# Create or update the config file
+if command -v jq >/dev/null 2>&1; then
+    # Use jq if available for proper JSON handling
+    if [ -f "$CLAUDE_CONFIG_FILE" ]; then
+        # Update existing file
+        jq '.includeCoAuthoredBy = false' "$CLAUDE_CONFIG_FILE" > "${CLAUDE_CONFIG_FILE}.tmp" && \
+        mv "${CLAUDE_CONFIG_FILE}.tmp" "$CLAUDE_CONFIG_FILE"
+    else
+        # Create new file
+        echo '{"includeCoAuthoredBy": false}' | jq . > "$CLAUDE_CONFIG_FILE"
+    fi
+else
+    # Fallback: create simple JSON without jq
+    if [ -f "$CLAUDE_CONFIG_FILE" ]; then
+        echo "Warning: jq not found. Creating backup and overwriting config file."
+        cp "$CLAUDE_CONFIG_FILE" "${CLAUDE_CONFIG_FILE}.backup"
+    fi
+    echo '{"includeCoAuthoredBy": false}' > "$CLAUDE_CONFIG_FILE"
+fi
+
+echo "Global Claude settings configured successfully!"
+echo "Config file: $CLAUDE_CONFIG_FILE"
+
+# Display the current settings
+if command -v jq >/dev/null 2>&1; then
+    echo ""
+    echo "Current settings:"
+    jq . "$CLAUDE_CONFIG_FILE"
+else
+    echo ""
+    echo "Current settings:"
+    cat "$CLAUDE_CONFIG_FILE"
+fi
