@@ -23,6 +23,11 @@ while [[ $# -gt 0 ]]; do
             echo "  - Creates/updates ~/.claude/CLAUDE.md with tool preferences"
             echo "  - Creates/updates ~/.codex/AGENTS.md with tool preferences"
             echo "  - Creates/updates ~/.gemini/GEMINI.md with tool preferences"
+            echo ""
+            echo "Documentation for global memory files:"
+            echo "  Claude:  https://docs.anthropic.com/en/docs/claude-code/memory#determine-memory-type"
+            echo "  Codex:   https://github.com/openai/codex/blob/main/docs/getting-started.md#memory-with-agentsmd"
+            echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md#example-context-file-content-eg-geminimd"
             exit 0
             ;;
         *)
@@ -207,3 +212,10 @@ else
     echo "Current settings:"
     cat "$CLAUDE_CONFIG_FILE"
 fi
+
+echo ""
+echo "📚 Documentation for global memory files:"
+echo "──────────────────────────────────────────────────"
+echo "Claude:  https://docs.anthropic.com/en/docs/claude-code/memory#determine-memory-type"
+echo "Codex:   https://github.com/openai/codex/blob/main/docs/getting-started.md#memory-with-agentsmd"
+echo "Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md#example-context-file-content-eg-geminimd"
