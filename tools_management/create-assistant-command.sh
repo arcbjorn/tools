@@ -1,0 +1,296 @@
+#!/usr/bin/env bash
+
+# Colors for omarchy theme
+RED='\033[38;5;1m'
+GREEN='\033[38;5;2m'
+YELLOW='\033[38;5;3m'
+BLUE='\033[38;5;4m'
+MAGENTA='\033[38;5;5m'
+CYAN='\033[38;5;6m'
+WHITE='\033[38;5;7m'
+GRAY='\033[38;5;8m'
+NC='\033[0m'
+
+TOOLS_DIR="/home/arc/tools"
+ASSISTANTS_DIR="$TOOLS_DIR/assistants"
+
+show_help() {
+    echo -e "${CYAN}Usage:${NC} $0 <command-name> [OPTIONS]"
+    echo
+    echo -e "${YELLOW}Arguments:${NC}"
+    echo "  command-name    Name of the command/prompt (e.g., 'ref-vars-js')"
+    echo
+    echo -e "${YELLOW}Options:${NC}"
+    echo "  -t, --type TYPE        Command type: common, claude, codex, gemini (default: common)"
+    echo "  -d, --description DESC Command description"
+    echo "  -h, --help            Show this help"
+    echo
+    echo -e "${YELLOW}File formats by assistant:${NC}"
+    echo "  common: .md files in commands/ (shared across assistants)"
+    echo "  claude: .md files in commands/ (uses \$ARGUMENTS placeholder)"
+    echo "  codex: .md files in prompts/ (entire file becomes prompt)"
+    echo "  gemini: .toml files in commands/ (structured with description + prompt fields)"
+    echo
+    echo -e "${YELLOW}Examples:${NC}"
+    echo "  $0 ref-vars-js -d 'Refactor JavaScript variables'"
+    echo "  $0 debug-react -t claude -d 'Debug React components'"
+    echo "  $0 fix-issue -t codex -d 'Fix code issues'"
+    echo "  $0 git-commit -t gemini -d 'Generate commit message'"
+    echo
+    echo -e "${GRAY}Note: Commands are created only in tools directory. Use sync-assistant-commands.sh to copy to global configs.${NC}"
+}
+
+create_claude_md_template() {
+    local name="$1"
+    local description="$2"
+    
+    cat << EOF
+$description
+
+Please analyze the provided code/context: \$ARGUMENTS
+
+Follow these steps:
+1. **Understand the requirements** - Analyze what needs to be done
+2. **Locate relevant code** - Find the files and functions involved
+3. **Implement solution** - Make the necessary changes
+4. **Verify results** - Ensure the changes work correctly
+
+Requirements:
+- Maintain code quality and readability
+- Follow existing coding conventions
+- Add appropriate documentation
+- Consider performance and security implications
+
+Provide detailed explanations of changes made.
+EOF
+}
+
+create_common_md_template() {
+    local name="$1"
+    local description="$2"
+    
+    cat << EOF
+# Common Assistant Commands
+
+## $(echo "${name#*-}" | tr '-' ' ' | sed 's/\b\w/\U&/g') Commands
+
+### \`/$name\` - $description
+Brief description of what this command does and its purpose.
+
+**Usage:**
+\`/$name [context or arguments]\`
+
+**Process:**
+1. **Analysis** - Understand the provided context
+2. **Planning** - Determine the best approach
+3. **Implementation** - Execute the required changes
+4. **Verification** - Ensure quality and correctness
+
+**Requirements:**
+- Follow language-specific best practices
+- Maintain existing code patterns
+- Provide clear documentation
+- Consider maintainability and performance
+
+This command works across all assistant types (Claude, Codex, Gemini).
+EOF
+}
+
+create_codex_md_template() {
+    local name="$1"
+    local description="$2"
+    
+    cat << EOF
+$description
+
+Please help with the following:
+
+**Objective:** $(echo "${name#*-}" | tr '-' ' ' | sed 's/\b\w/\U&/g')
+
+**Requirements:**
+1. Analyze the provided code carefully
+2. Identify areas for improvement
+3. Apply best practices for the language
+4. Ensure code remains functional
+5. Add appropriate comments/documentation
+
+**Process:**
+- Review existing code structure
+- Apply language-specific conventions
+- Optimize for readability and performance
+- Test changes where applicable
+- Provide explanations for modifications
+
+Please provide the improved code with detailed explanations.
+EOF
+}
+
+create_gemini_toml_template() {
+    local name="$1"
+    local description="$2"
+    
+    cat << EOF
+description = "$description"
+prompt = """
+Please help with: $description
+
+Context/Code: {{args}}
+
+**Objective:** $(echo "${name#*-}" | tr '-' ' ' | sed 's/\b\w/\U&/g')
+
+**Steps to follow:**
+1. **Analysis** - Understand the provided context/code
+2. **Planning** - Determine the optimal approach
+3. **Implementation** - Make necessary changes
+4. **Documentation** - Explain changes and rationale
+
+**Requirements:**
+- Follow language-specific best practices
+- Maintain existing code patterns and style
+- Ensure functionality is preserved
+- Add clear comments/documentation
+- Consider performance and maintainability
+
+Provide detailed explanations of all changes made.
+"""
+EOF
+}
+
+get_file_info() {
+    local type="$1"
+    case "$type" in
+        codex)
+            echo "prompts md"
+            ;;
+        gemini)
+            echo "commands toml"
+            ;;
+        claude|common)
+            echo "commands md"
+            ;;
+        *)
+            echo "commands md"
+            ;;
+    esac
+}
+
+main() {
+    local command_name=""
+    local command_type="common"
+    local description=""
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            -t|--type)
+                command_type="$2"
+                shift 2
+                ;;
+            -d|--description)
+                description="$2"
+                shift 2
+                ;;
+            -*)
+                echo -e "${RED}Error:${NC} Unknown option $1"
+                show_help
+                exit 1
+                ;;
+            *)
+                if [[ -z "$command_name" ]]; then
+                    command_name="$1"
+                else
+                    echo -e "${RED}Error:${NC} Multiple command names provided"
+                    show_help
+                    exit 1
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    # Validate required arguments
+    if [[ -z "$command_name" ]]; then
+        echo -e "${RED}Error:${NC} Command name is required"
+        show_help
+        exit 1
+    fi
+
+    # Validate command type
+    if [[ ! "$command_type" =~ ^(common|claude|codex|gemini)$ ]]; then
+        echo -e "${RED}Error:${NC} Invalid type '$command_type'. Must be: common, claude, codex, or gemini"
+        exit 1
+    fi
+
+    # Set default description if not provided
+    if [[ -z "$description" ]]; then
+        description="$(echo "${command_name#*-}" | tr '-' ' ' | sed 's/\b\w/\U&/g') command"
+    fi
+
+    # Get file info based on type
+    read -r subdir extension <<< "$(get_file_info "$command_type")"
+    
+    # Create target directory and file
+    local target_dir="$ASSISTANTS_DIR/$command_type/$subdir"
+    local target_file="$target_dir/${command_name}.$extension"
+
+    echo -e "${BLUE}Creating command:${NC} $command_name"
+    echo -e "${BLUE}Type:${NC} $command_type"
+    echo -e "${BLUE}Description:${NC} $description"
+    echo -e "${BLUE}Format:${NC} .$extension in $subdir/"
+    echo -e "${BLUE}Target:${NC} $target_file"
+
+    # Create directory if it doesn't exist
+    mkdir -p "$target_dir"
+
+    # Check if file already exists
+    if [[ -f "$target_file" ]]; then
+        echo -e "${YELLOW}Warning:${NC} Command file already exists at $target_file"
+        read -p "Overwrite? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo -e "${GRAY}Cancelled.${NC}"
+            exit 0
+        fi
+    fi
+
+    # Create the command file based on assistant type
+    case "$command_type" in
+        claude)
+            create_claude_md_template "$command_name" "$description" > "$target_file"
+            ;;
+        codex)
+            create_codex_md_template "$command_name" "$description" > "$target_file"
+            ;;
+        gemini)
+            create_gemini_toml_template "$command_name" "$description" > "$target_file"
+            ;;
+        *)
+            create_common_md_template "$command_name" "$description" > "$target_file"
+            ;;
+    esac
+
+    echo -e "${GREEN}✓${NC} Created command file: $target_file"
+    echo -e "${GRAY}Edit the file to customize the prompt details.${NC}"
+    
+    # Show format-specific tips
+    case "$command_type" in
+        claude)
+            echo -e "${CYAN}Tip:${NC} Use \$ARGUMENTS placeholder for dynamic input in Claude Code"
+            ;;
+        codex)
+            echo -e "${CYAN}Tip:${NC} Entire file content becomes the prompt when using /$command_name"
+            ;;
+        gemini)
+            echo -e "${CYAN}Tip:${NC} Use {{args}} for arguments, !{command} for shell execution, @{file} for file injection"
+            ;;
+        *)
+            echo -e "${CYAN}Tip:${NC} Common commands work across all assistants - keep them generic"
+            ;;
+    esac
+}
+
+main "$@"

@@ -1,0 +1,265 @@
+#!/usr/bin/env bash
+
+# Colors for omarchy theme
+RED='\033[38;5;1m'
+GREEN='\033[38;5;2m'
+YELLOW='\033[38;5;3m'
+BLUE='\033[38;5;4m'
+MAGENTA='\033[38;5;5m'
+CYAN='\033[38;5;6m'
+WHITE='\033[38;5;7m'
+GRAY='\033[38;5;8m'
+NC='\033[0m'
+
+TOOLS_DIR="/home/arc/tools"
+ASSISTANTS_DIR="$TOOLS_DIR/assistants"
+
+show_help() {
+    echo -e "${CYAN}Usage:${NC} $0 [OPTIONS]"
+    echo
+    echo -e "${YELLOW}Options:${NC}"
+    echo "  -t, --type TYPE    Sync specific assistant type: claude, codex, gemini, common, all"
+    echo "  -n, --dry-run      Show what would be synced without making changes"
+    echo "  -h, --help         Show this help"
+    echo
+    echo -e "${YELLOW}Global directories (will be overwritten):${NC}"
+    echo "  claude: ~/.claude/commands/"
+    echo "  codex: ~/.codex/prompts/"
+    echo "  gemini: ~/.gemini/commands/"
+    echo
+    echo -e "${YELLOW}Examples:${NC}"
+    echo "  $0                 # Interactive selection with gum"
+    echo "  $0 -t claude       # Overwrite only Claude global commands"
+    echo "  $0 -n              # Dry run - show what would be synced"
+}
+
+interactive_selection() {
+    if ! command -v gum &> /dev/null; then
+        echo -e "${RED}Error:${NC} gum is required for interactive mode"
+        echo "Install with: pacman -S gum"
+        exit 1
+    fi
+    
+    echo -e "${CYAN}Select assistant commands to sync:${NC}"
+    
+    local choice
+    choice=$(gum choose \
+        --foreground 4 \
+        "All assistants" \
+        "Claude only" \
+        "Codex only" \
+        "Gemini only" \
+        "Common commands only" \
+        "Cancel")
+    
+    case "$choice" in
+        "All assistants") echo "all" ;;
+        "Claude only") echo "claude" ;;
+        "Codex only") echo "codex" ;;
+        "Gemini only") echo "gemini" ;;
+        "Common commands only") echo "common" ;;
+        "Cancel"|"") echo "cancel" ;;
+        *) echo "cancel" ;;
+    esac
+}
+
+get_global_info() {
+    local type="$1"
+    case "$type" in
+        claude)
+            echo "$HOME/.claude/commands"
+            ;;
+        codex)
+            echo "$HOME/.codex/prompts"
+            ;;
+        gemini)
+            echo "$HOME/.gemini/commands"
+            ;;
+        *)
+            echo ""
+            ;;
+    esac
+}
+
+sync_commands() {
+    local source_type="$1"
+    local target_type="$2"
+    local dry_run="$3"
+    
+    local source_dir="$ASSISTANTS_DIR/$source_type"
+    local global_dir
+    global_dir="$(get_global_info "$target_type")"
+    
+    if [[ -z "$global_dir" ]]; then
+        echo -e "${RED}Error:${NC} Unknown target type '$target_type'"
+        return 1
+    fi
+    
+    if [[ ! -d "$source_dir" ]]; then
+        echo -e "${YELLOW}Warning:${NC} Source directory does not exist: $source_dir"
+        return 0
+    fi
+    
+    # Find appropriate subdirectory based on target type
+    local source_subdir
+    case "$target_type" in
+        codex) source_subdir="prompts" ;;
+        *) source_subdir="commands" ;;
+    esac
+    
+    local full_source_dir="$source_dir/$source_subdir"
+    
+    if [[ ! -d "$full_source_dir" ]]; then
+        echo -e "${GRAY}No $source_subdir directory in $source_dir${NC}"
+        return 0
+    fi
+    
+    local file_count
+    file_count=$(find "$full_source_dir" -maxdepth 1 -type f | wc -l)
+    
+    if [[ $file_count -eq 0 ]]; then
+        echo -e "${GRAY}No files to sync from $full_source_dir${NC}"
+        return 0
+    fi
+    
+    echo -e "${BLUE}Syncing:${NC} $source_type -> $target_type ($file_count files)"
+    echo -e "${GRAY}Source:${NC} $full_source_dir"
+    echo -e "${GRAY}Target:${NC} $global_dir"
+    
+    if [[ "$dry_run" == "true" ]]; then
+        echo -e "${YELLOW}[DRY RUN]${NC} Would:"
+        echo -e "  ${RED}✗${NC} Remove all existing files in $global_dir"
+        echo -e "  ${GREEN}+${NC} Copy from $full_source_dir:"
+        find "$full_source_dir" -maxdepth 1 -type f -printf "    %f\n"
+        return 0
+    fi
+    
+    # Remove existing global directory and recreate
+    if [[ -d "$global_dir" ]]; then
+        echo -e "  ${RED}✗${NC} Removing existing global directory"
+        rm -rf "$global_dir"
+    fi
+    
+    # Create fresh target directory
+    mkdir -p "$global_dir"
+    
+    # Copy all files
+    local copied=0
+    while IFS= read -r -d '' file; do
+        local filename
+        filename="$(basename "$file")"
+        local target_file="$global_dir/$filename"
+        
+        if cp "$file" "$target_file"; then
+            echo -e "  ${GREEN}+${NC} $filename"
+            ((copied++))
+        else
+            echo -e "  ${RED}✗${NC} Failed to copy $filename"
+        fi
+    done < <(find "$full_source_dir" -maxdepth 1 -type f -print0)
+    
+    echo -e "${GREEN}Synced $copied files${NC}"
+}
+
+sync_common_commands() {
+    local dry_run="$1"
+    
+    echo -e "${MAGENTA}Syncing common commands to all assistants:${NC}"
+    
+    # Sync common commands to claude, codex, and gemini
+    for target_type in claude codex gemini; do
+        sync_commands "common" "$target_type" "$dry_run"
+        echo
+    done
+}
+
+main() {
+    local sync_type=""
+    local dry_run="false"
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            -t|--type)
+                sync_type="$2"
+                shift 2
+                ;;
+            -n|--dry-run)
+                dry_run="true"
+                shift
+                ;;
+            -*)
+                echo -e "${RED}Error:${NC} Unknown option $1"
+                show_help
+                exit 1
+                ;;
+            *)
+                echo -e "${RED}Error:${NC} Unexpected argument: $1"
+                show_help
+                exit 1
+                ;;
+        esac
+    done
+    
+    # Interactive selection if no type specified
+    if [[ -z "$sync_type" ]]; then
+        sync_type=$(interactive_selection)
+        if [[ "$sync_type" == "cancel" ]]; then
+            echo -e "${GRAY}Cancelled.${NC}"
+            exit 0
+        fi
+    fi
+    
+    # Validate sync type
+    if [[ ! "$sync_type" =~ ^(all|common|claude|codex|gemini)$ ]]; then
+        echo -e "${RED}Error:${NC} Invalid type '$sync_type'. Must be: all, common, claude, codex, or gemini"
+        exit 1
+    fi
+    
+    if [[ "$dry_run" == "true" ]]; then
+        echo -e "${YELLOW}DRY RUN MODE - No changes will be made${NC}"
+        echo
+    fi
+    
+    echo -e "${RED}WARNING:${NC} This will completely overwrite global command directories!"
+    if [[ "$dry_run" == "false" ]]; then
+        read -p "Continue? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo -e "${GRAY}Cancelled.${NC}"
+            exit 0
+        fi
+        echo
+    fi
+    
+    case "$sync_type" in
+        all)
+            echo -e "${CYAN}Overwriting all global commands with local versions${NC}"
+            echo
+            sync_commands "claude" "claude" "$dry_run"
+            echo
+            sync_commands "codex" "codex" "$dry_run"
+            echo
+            sync_commands "gemini" "gemini" "$dry_run"
+            echo
+            sync_common_commands "$dry_run"
+            ;;
+        common)
+            sync_common_commands "$dry_run"
+            ;;
+        claude|codex|gemini)
+            sync_commands "$sync_type" "$sync_type" "$dry_run"
+            ;;
+    esac
+    
+    if [[ "$dry_run" == "false" ]]; then
+        echo
+        echo -e "${GREEN}✓${NC} Global commands overwritten with local versions"
+    fi
+}
+
+main "$@"
