@@ -132,7 +132,6 @@ display_table() {
     } > "$temp_csv"
     
     # Display interactive table
-    echo "Use arrow keys to navigate, Enter to select, Ctrl+C to exit"
     echo
     
     local selected_row
