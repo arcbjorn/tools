@@ -47,8 +47,6 @@ get_description() {
         configure-shell) echo "Setup shell to source tools configuration" ;;
         init-new-tool) echo "Initialize new tool repository as submodule" ;;
         
-        # This launcher
-        tools.sh) echo "Interactive tool launcher" ;;
         
         # Default for unknown tools
         *) echo "$(basename "$file")" ;;
@@ -87,7 +85,7 @@ build_menu() {
             if [[ -f "$file" && -x "$file" ]]; then
                 local basename=$(basename "$file")
                 # Skip this script itself
-                if [[ "$basename" != "tools.sh" ]]; then
+                if [[ "$basename" != "tools" ]]; then
                     if [[ "$scripts_found" == false ]]; then
                         # Add spacing before scripts section if executables exist
                         if [[ ${#options[@]} -gt 0 ]]; then
