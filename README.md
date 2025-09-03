@@ -6,13 +6,20 @@ A clean system for managing personal CLI utilities and scripts.
 
 ```
 ~/tools/
-├── bin/           # Compiled binaries (auto-generated)
-├── scripts/       # Shell scripts (place directly here)
-├── sources/       # Git repos/submodules for tools needing compilation
-├── build.sh         # Build script for sources/
-├── init.sh          # Initial setup (adds PATH, runs build)
-├── init-new-tool    # Create new tool as submodule in sources/
-└── set_permissions  # Fix permissions for scripts/executables
+├── bin/              # Compiled binaries (auto-generated)
+├── scripts/          # Shell scripts (place directly here)
+├── sources/          # Git repos/submodules for tools needing compilation
+├── assistants/       # AI assistant configuration system
+│   ├── common/       # Shared instructions and commands
+│   ├── claude/       # Claude-specific configurations
+│   ├── codex/        # Codex-specific configurations (uses prompts/)
+│   └── gemini/       # Gemini-specific configurations
+├── manage.sh         # Interactive management interface
+├── tools             # Interactive tool launcher
+├── build.sh          # Build script for sources/
+├── init.sh           # Initial setup (adds PATH, runs build)
+├── init-new-tool     # Create new tool as submodule in sources/
+└── set_permissions   # Fix permissions for scripts/executables
 ```
 
 ## Installation
@@ -29,6 +36,24 @@ This will:
 - Make scripts executable
 
 ## Usage
+
+### Interactive Interfaces
+```bash
+./manage.sh    # Management interface for core tools
+./tools        # Launch any script or executable
+```
+
+### AI Assistant Configuration
+Configure global settings for Claude, Codex, and Gemini:
+```bash
+./scripts/configure-assistants-global   # Setup global configurations
+./scripts/clean-global-assistants-configs  # Remove all configurations
+```
+
+Creates:
+- `~/.claude/CLAUDE.md` + `~/.claude/commands/`
+- `~/.codex/AGENTS.md` + `~/.codex/prompts/` 
+- `~/.gemini/GEMINI.md` + `~/.gemini/commands/`
 
 ### Adding Scripts
 Place shell scripts directly in `scripts/`:

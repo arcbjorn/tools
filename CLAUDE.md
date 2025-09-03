@@ -18,6 +18,9 @@ This is a tools management system with the following structure:
 - `scripts/` - Utility scripts (in PATH)
 - `bin/` - Compiled executables (in PATH)  
 - `sources/` - Source code as git submodules
+- `assistants/` - AI assistant configuration system
+  - `common/` - Shared instructions and commands for all assistants
+  - `claude/`, `codex/`, `gemini/` - Assistant-specific configurations
 
 ## Usage
 1. Run `./manage.sh` for interactive menu
@@ -26,8 +29,15 @@ This is a tools management system with the following structure:
 
 ## Commands to Remember
 - `./manage.sh` - Main interface
+- `tools` - Interactive launcher for all scripts and executables
 - Option 2: Initialize Tools - Complete setup for new systems
 - Option 7: View All Tools - See available scripts and executables
+
+## Assistant Configuration
+- `configure-assistants-global` - Setup global assistant settings and commands
+- `clean-global-assistants-configs` - Remove all assistant configuration files
+- Creates modular system with shared and assistant-specific instructions
+- Copies command templates to appropriate directories (Claude: commands/, Codex: prompts/, Gemini: commands/)
 
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
