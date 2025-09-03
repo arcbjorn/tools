@@ -33,6 +33,7 @@ get_description() {
     case "$basename" in
         # Assistant configuration
         configure-assistants-global) echo "Configure global assistant settings (Claude, Codex, Gemini)" ;;
+        clean-global-assistants-configs) echo "Remove global assistant configuration files" ;;
         configure-cc-glm) echo "Configure Claude GLM integration" ;;
         
         # Repository management
