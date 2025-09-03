@@ -1,7 +1,7 @@
 # Shell shortcuts and aliases
 
 # Git shortcuts
-alias gs='git status'
+alias gstat='git status'
 alias gd='git diff'
 alias ga='git add'
 alias gc='git commit'
