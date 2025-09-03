@@ -104,66 +104,293 @@ build_menu_data() {
     TOTAL_ITEMS=${#commands[@]}
 }
 
-# Display the menu
+
+# Display the menu with categories
 display_menu() {
+    clear
+    echo -e "${CYAN}╭─────────────────────────────────────╮${NC}"
+    echo -e "${CYAN}│${NC}            ${MAGENTA}Tools Launcher${NC}             ${CYAN}│${NC}"
+    echo -e "${CYAN}╰─────────────────────────────────────╯${NC}"
+    echo
+    
+    # Show main categories with icons and spacing
+    echo -e "${YELLOW}1)${NC}  🤖  ${GREEN}Assistant Configuration${NC}"
+    echo
+    echo -e "${YELLOW}2)${NC}  📦  ${GREEN}Git & Repository${NC}"
+    echo
+    echo -e "${YELLOW}3)${NC}  🔧  ${GREEN}Tools Management${NC}"
+    echo
+    echo -e "${YELLOW}4)${NC}  🔍  ${GREEN}View All Tools${NC}"
+    echo
+    echo
+    echo -e "${YELLOW}q)${NC}  ❌  ${WHITE}Quit${NC}"
+    echo
+}
+
+# Show tools management submenu - launches manage.sh
+show_tools_management() {
+    clear
+    echo -e "${CYAN}╭─────────────────────────────────────╮${NC}"
+    echo -e "${CYAN}│${NC}       ${MAGENTA}Tools Management${NC}          ${CYAN}│${NC}"
+    echo -e "${CYAN}╰─────────────────────────────────────╯${NC}"
+    echo
+    
+    echo -e "${WHITE}Launching Tools Management Interface...${NC}"
+    echo
+    
+    # Change to tools directory and run manage.sh
+    cd "$TOOLS_DIR" && ./manage.sh
+    
+    echo
+    echo -e "${WHITE}Tools Management completed.${NC}"
+    echo -ne "${YELLOW}Press any key to continue...${NC}"
+    read -n 1 -s
+    echo
+}
+
+# Show git & repository submenu
+show_git_repository() {
+    clear
+    echo -e "${CYAN}╭─────────────────────────────────────╮${NC}"
+    echo -e "${CYAN}│${NC}       ${MAGENTA}Git & Repository${NC}          ${CYAN}│${NC}"
+    echo -e "${CYAN}╰─────────────────────────────────────╯${NC}"
+    echo
+    
     local counter=1
+    local git_tools=("attach-existing-repo" "init-new-repo" "git-status-overview" "github-stats")
+    local bin_shown=false
+    local scripts_shown=false
+    
+    for tool in "${git_tools[@]}"; do
+        # Find tool and check if it's in bin/ or scripts/
+        for i in "${!MENU_NAMES[@]}"; do
+            if [[ "${MENU_NAMES[i]}" == "$tool" ]]; then
+                local file="${MENU_COMMANDS[i]}"
+                local description="${MENU_DESCRIPTIONS[i]}"
+                
+                # Show appropriate header
+                if [[ "$file" == "$BIN_DIR"/* && "$bin_shown" == false ]]; then
+                    echo -e "${CYAN}── 📦 EXECUTABLES (bin/) ──${NC}"
+                    echo
+                    bin_shown=true
+                elif [[ "$file" != "$BIN_DIR"/* && "$scripts_shown" == false && "$bin_shown" == true ]]; then
+                    echo
+                    echo -e "${CYAN}── 📜 SCRIPTS (scripts/) ──${NC}"
+                    echo
+                    scripts_shown=true
+                elif [[ "$file" != "$BIN_DIR"/* && "$scripts_shown" == false ]]; then
+                    echo -e "${CYAN}── 📜 SCRIPTS (scripts/) ──${NC}"
+                    echo
+                    scripts_shown=true
+                fi
+                
+                echo -e "${YELLOW}$counter)${NC} ${GREEN}$tool${NC}"
+                echo -e "   ${WHITE}$description${NC}"
+                echo
+                ((counter++))
+                break
+            fi
+        done
+    done
+    
+    echo -e "${YELLOW}b)${NC} ${WHITE}Back to main menu${NC}"
+    echo -e "${YELLOW}q)${NC} ${WHITE}Quit${NC}"
+    echo
+}
+
+# Show assistant configuration submenu
+show_assistant_config() {
+    clear
+    echo -e "${CYAN}╭─────────────────────────────────────╮${NC}"
+    echo -e "${CYAN}│${NC}    ${MAGENTA}Assistant Configuration${NC}     ${CYAN}│${NC}"
+    echo -e "${CYAN}╰─────────────────────────────────────╯${NC}"
+    echo
+    
+    local counter=1
+    local assistant_tools=("configure-assistants-global" "clean-global-assistants-configs" "configure-cc-glm" "create-assistant-command" "sync-assistant-commands")
+    local bin_shown=false
+    local scripts_shown=false
+    
+    for tool in "${assistant_tools[@]}"; do
+        # Find tool and check if it's in bin/ or scripts/
+        for i in "${!MENU_NAMES[@]}"; do
+            if [[ "${MENU_NAMES[i]}" == "$tool" ]]; then
+                local file="${MENU_COMMANDS[i]}"
+                local description="${MENU_DESCRIPTIONS[i]}"
+                
+                # Show appropriate header
+                if [[ "$file" == "$BIN_DIR"/* && "$bin_shown" == false ]]; then
+                    echo -e "${CYAN}── 📦 EXECUTABLES (bin/) ──${NC}"
+                    echo
+                    bin_shown=true
+                elif [[ "$file" != "$BIN_DIR"/* && "$scripts_shown" == false && "$bin_shown" == true ]]; then
+                    echo
+                    echo -e "${CYAN}── 📜 SCRIPTS (scripts/) ──${NC}"
+                    echo
+                    scripts_shown=true
+                elif [[ "$file" != "$BIN_DIR"/* && "$scripts_shown" == false ]]; then
+                    echo -e "${CYAN}── 📜 SCRIPTS (scripts/) ──${NC}"
+                    echo
+                    scripts_shown=true
+                fi
+                
+                echo -e "${YELLOW}$counter)${NC} ${GREEN}$tool${NC}"
+                echo -e "   ${WHITE}$description${NC}"
+                echo
+                ((counter++))
+                break
+            fi
+        done
+    done
+    
+    echo -e "${YELLOW}b)${NC} ${WHITE}Back to main menu${NC}"
+    echo -e "${YELLOW}q)${NC} ${WHITE}Quit${NC}"
+    echo
+}
+
+# Show all tools using gum choose with filter
+show_all_tools() {
+    local options=()
+    local tool_commands=()
+    local tool_names=()
+    
+    # Build options with proper formatting showing bin/scripts sections
     local in_bin_section=true
-    local bin_header_shown=false
-    local scripts_header_shown=false
+    local bin_header_added=false
+    local scripts_header_added=false
     
     for i in "${!MENU_COMMANDS[@]}"; do
         local file="${MENU_COMMANDS[i]}"
         local name="${MENU_NAMES[i]}"
         local description="${MENU_DESCRIPTIONS[i]}"
         
-        # Check if we're in bin/ or scripts/
+        # Check if we're in bin/ or scripts/ and add headers as needed
         if [[ "$file" == "$BIN_DIR"/* ]]; then
-            if [[ "$bin_header_shown" == false ]]; then
-                echo -e "${CYAN}── 📦 EXECUTABLES (bin/) ──${NC}"
-                echo
-                bin_header_shown=true
+            if [[ "$bin_header_added" == false ]]; then
+                options+=("── 📦 EXECUTABLES (bin/) ──")
+                tool_commands+=("")
+                tool_names+=("")
+                bin_header_added=true
             fi
         else
             if [[ "$in_bin_section" == true ]]; then
                 in_bin_section=false
-                if [[ "$bin_header_shown" == true ]]; then
-                    echo
-                fi
             fi
-            if [[ "$scripts_header_shown" == false ]]; then
-                echo -e "${CYAN}── 📜 SCRIPTS (scripts/) ──${NC}"
-                echo
-                scripts_header_shown=true
+            if [[ "$scripts_header_added" == false ]]; then
+                options+=("── 📜 SCRIPTS (scripts/) ──")
+                tool_commands+=("")
+                tool_names+=("")
+                scripts_header_added=true
             fi
         fi
         
-        printf "${YELLOW}%2d)${NC} ${GREEN}%s${NC}\n" "$counter" "$name"
-        printf "    ${WHITE}%s${NC}\n\n" "$description"
-        ((counter++))
+        # Add the actual tool
+        options+=("$name - $description")
+        tool_commands+=("$file")
+        tool_names+=("$name")
     done
+    
+    # Use gum choose with filter
+    local choice=$(printf '%s\n' "${options[@]}" | gum choose \
+        --header "🔍 Search and select a tool to run:" \
+        --cursor-prefix "→ " \
+        --selected-prefix "✓ " \
+        --unselected-prefix "  " \
+        --cursor.foreground="3" \
+        --header.foreground="5" \
+        --item.foreground="7" \
+        --selected.foreground="2" \
+        --height 25)
+    
+    if [[ -z "$choice" ]]; then
+        echo -e "${YELLOW}No selection made, returning to main menu...${NC}"
+        return 0
+    fi
+    
+    # Skip header lines
+    if [[ "$choice" == "──"* ]]; then
+        echo -e "${YELLOW}Please select an actual tool, not a header.${NC}"
+        sleep 1
+        show_all_tools  # Recursive call to try again
+        return $?
+    fi
+    
+    # Find and execute the selected tool
+    for i in "${!options[@]}"; do
+        if [[ "${options[i]}" == "$choice" ]]; then
+            local command="${tool_commands[i]}"
+            local tool_name="${tool_names[i]}"
+            
+            if [[ -n "$command" ]]; then
+                echo
+                echo -e "${MAGENTA}Running: ${GREEN}$tool_name${NC}"
+                echo -e "${WHITE}Command: $command${NC}"
+                echo
+                
+                echo -e "${GREEN}Executing...${NC}"
+                echo "────────────────────────────────────────"
+                
+                $command
+                
+                echo
+                echo "────────────────────────────────────────"
+                echo -e "${WHITE}Command completed.${NC}"
+                echo
+                
+                echo -ne "${YELLOW}Press any key to continue...${NC}"
+                read -n 1 -s
+                echo
+                return 0
+            fi
+            break
+        fi
+    done
+    
+    echo -e "${RED}Error: Could not execute selected tool${NC}"
+    return 1
 }
 
-# Get user selection (single keypress)
+# Get user selection
 get_selection() {
     local choice
-    echo -ne "${YELLOW}Press (1-$TOTAL_ITEMS) or 'q' to quit: ${NC}"
+    echo -ne "${YELLOW}Enter choice: ${NC}"
     read -n 1 -s choice
-    echo  # Add newline after keypress
-    
-    if [[ "$choice" == "q" || "$choice" == "Q" ]]; then
-        echo -e "${WHITE}Goodbye!${NC}"
-        exit 0
-    fi
-    
-    # Validate numeric input
-    if ! [[ "$choice" =~ ^[0-9]$ ]] || [[ "$choice" -lt 1 ]] || [[ "$choice" -gt $TOTAL_ITEMS ]]; then
-        echo -e "${RED}Invalid choice. Press a number between 1 and $TOTAL_ITEMS${NC}"
-        sleep 1
-        return 1
-    fi
+    echo
     
     SELECTED_CHOICE="$choice"
     return 0
+}
+
+# Execute tool by name
+execute_tool() {
+    local tool_name="$1"
+    
+    # Find the command for this tool
+    for i in "${!MENU_NAMES[@]}"; do
+        if [[ "${MENU_NAMES[i]}" == "$tool_name" ]]; then
+            local command="${MENU_COMMANDS[i]}"
+            
+            echo
+            echo -e "${MAGENTA}Running: ${GREEN}$tool_name${NC}"
+            echo -e "${WHITE}Command: $command${NC}"
+            echo
+            
+            echo -e "${GREEN}Executing...${NC}"
+            echo "────────────────────────────────────────"
+            
+            $command
+            
+            echo
+            echo "────────────────────────────────────────"
+            echo -e "${WHITE}Command completed.${NC}"
+            echo
+            
+            return 0
+        fi
+    done
+    
+    echo -e "${RED}Tool not found: $tool_name${NC}"
+    return 1
 }
 
 # Main function
@@ -176,52 +403,68 @@ main() {
         exit 1
     fi
     
+    local current_menu="main"
+    
     while true; do
-        # Clear screen and show header
-        clear
-        echo -e "${CYAN}╭─────────────────────────────────────╮${NC}"
-        echo -e "${CYAN}│${NC}            ${MAGENTA}Tools Launcher${NC}             ${CYAN}│${NC}"
-        echo -e "${CYAN}╰─────────────────────────────────────╯${NC}"
-        echo
-        
-        # Display the menu
-        display_menu
-        
-        # Get user selection
-        if ! get_selection; then
-            echo
-            continue
-        fi
-        
-        # Find the corresponding command
-        local command="${MENU_COMMANDS[$((SELECTED_CHOICE - 1))]}"
-        local tool_name=$(basename "$command")
-        
-        echo
-        echo -e "${MAGENTA}Running: ${GREEN}$tool_name${NC}"
-        echo -e "${WHITE}Command: $command${NC}"
-        echo
-        
-        # Run the command directly
-        echo -e "${GREEN}Executing...${NC}"
-        echo "────────────────────────────────────────"
-        
-        $command
-        
-        echo
-        echo "────────────────────────────────────────"
-        echo -e "${WHITE}Command completed.${NC}"
-        echo
-        
-        # Ask if user wants to continue
-        echo -ne "${YELLOW}Run another tool? Press any key to continue or 'q' to quit: ${NC}"
-        read -n 1 -s continue_choice
-        echo
-        
-        if [[ "$continue_choice" == "q" || "$continue_choice" == "Q" ]]; then
-            echo -e "${WHITE}Goodbye!${NC}"
-            exit 0
-        fi
+        case "$current_menu" in
+            "main")
+                display_menu
+                get_selection
+                case "$SELECTED_CHOICE" in
+                    1) current_menu="assistant" ;;
+                    2) current_menu="git" ;;
+                    3) current_menu="tools" ;;
+                    4) current_menu="all" ;;
+                    q|Q) echo -e "${WHITE}Goodbye!${NC}"; exit 0 ;;
+                    *) echo -e "${RED}Invalid choice${NC}"; sleep 1 ;;
+                esac
+                ;;
+            "tools")
+                show_tools_management
+                current_menu="main"  # Return to main after tools management
+                ;;
+            "git")
+                show_git_repository
+                get_selection
+                case "$SELECTED_CHOICE" in
+                    1) execute_tool "attach-existing-repo" ;;
+                    2) execute_tool "init-new-repo" ;;
+                    3) execute_tool "git-status-overview" ;;
+                    4) execute_tool "github-stats" ;;
+                    b|B) current_menu="main" ;;
+                    q|Q) echo -e "${WHITE}Goodbye!${NC}"; exit 0 ;;
+                    *) echo -e "${RED}Invalid choice${NC}"; sleep 1 ;;
+                esac
+                if [[ "$SELECTED_CHOICE" =~ ^[1-4]$ ]]; then
+                    echo -ne "${YELLOW}Press any key to continue...${NC}"
+                    read -n 1 -s
+                    echo
+                fi
+                ;;
+            "assistant")
+                show_assistant_config
+                get_selection
+                case "$SELECTED_CHOICE" in
+                    1) execute_tool "configure-assistants-global" ;;
+                    2) execute_tool "clean-global-assistants-configs" ;;
+                    3) execute_tool "configure-cc-glm" ;;
+                    4) execute_tool "create-assistant-command" ;;
+                    5) execute_tool "sync-assistant-commands" ;;
+                    b|B) current_menu="main" ;;
+                    q|Q) echo -e "${WHITE}Goodbye!${NC}"; exit 0 ;;
+                    *) echo -e "${RED}Invalid choice${NC}"; sleep 1 ;;
+                esac
+                if [[ "$SELECTED_CHOICE" =~ ^[1-5]$ ]]; then
+                    echo -ne "${YELLOW}Press any key to continue...${NC}"
+                    read -n 1 -s
+                    echo
+                fi
+                ;;
+            "all")
+                show_all_tools
+                current_menu="main"  # Return to main menu after tool selection
+                ;;
+        esac
     done
 }
 
