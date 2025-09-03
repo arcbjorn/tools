@@ -35,6 +35,8 @@ get_description() {
         configure-assistants-global) echo "Configure global assistant settings (Claude, Codex, Gemini)" ;;
         clean-global-assistants-configs) echo "Remove global assistant configuration files" ;;
         configure-cc-glm) echo "Configure Claude GLM integration" ;;
+        create-assistant-command) echo "Create new assistant command/prompt templates" ;;
+        sync-assistant-commands) echo "Sync assistant commands to global directories" ;;
         
         # Repository management
         attach-existing-repo) echo "Attach existing project directory to new remote repository" ;;
