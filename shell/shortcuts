@@ -24,6 +24,8 @@ alias l='ls -GF'
 
 # Claude shortcuts
 alias cc='claude'
+alias ccc='claude --continue'
+alias glmc='glm --continue'
 
 # Show all shortcuts with syntax highlighting
 shortcuts() {
