@@ -48,6 +48,9 @@ get_description() {
         configure-shell) echo "Setup shell to source tools configuration" ;;
         init-new-tool) echo "Initialize new tool repository as submodule" ;;
         
+        # Git tools
+        git-status-overview) echo "System-wide git repository status overview with priority sorting" ;;
+        
         
         # Default for unknown tools
         *) echo "$(basename "$file")" ;;
