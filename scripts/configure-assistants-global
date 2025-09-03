@@ -19,13 +19,20 @@ while [[ $# -gt 0 ]]; do
             echo "  --help, -h          Show this help message"
             echo ""
             echo "This script configures global assistant settings:"
-            echo "  - Sets Claude includeCoAuthoredBy: false"
+            echo "  - Merges settings into ~/.claude/settings.json"
+            echo "  - Merges settings into ~/.codex/config.toml"
+            echo "  - Merges settings into ~/.gemini/settings.json"
             echo "  - Creates/updates ~/.claude/CLAUDE.md with tool preferences"
             echo "  - Creates/updates ~/.codex/AGENTS.md with tool preferences"
             echo "  - Creates/updates ~/.gemini/GEMINI.md with tool preferences"
             echo "  - Copies commands to ~/.claude/commands/"
             echo "  - Copies prompts to ~/.codex/prompts/"
             echo "  - Copies commands to ~/.gemini/commands/"
+            echo ""
+            echo "Documentation for global settings:"
+            echo "  Claude:  https://docs.anthropic.com/en/docs/claude-code/settings"
+            echo "  Codex:   https://github.com/openai/codex/blob/main/docs/config.md"
+            echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md"
             echo ""
             echo "Documentation for global memory files:"
             echo "  Claude:  https://docs.anthropic.com/en/docs/claude-code/memory#determine-memory-type"
@@ -218,16 +225,16 @@ if [ -d "$ASSISTANTS_DIR/gemini/commands" ]; then
     cp -r "$ASSISTANTS_DIR/gemini/commands"/* "$GEMINI_COMMANDS_DIR/" 2>/dev/null || true
 fi
 
-# Create or update the config file
+# Create or update Claude config file
 if command -v jq >/dev/null 2>&1; then
-    # Use jq if available for proper JSON handling
+    # Use jq for proper JSON merging
     if [ -f "$CLAUDE_CONFIG_FILE" ]; then
-        # Update existing file
-        jq '.includeCoAuthoredBy = false' "$CLAUDE_CONFIG_FILE" > "${CLAUDE_CONFIG_FILE}.tmp" && \
+        # Merge with existing file
+        jq -s '.[0] * .[1]' "$CLAUDE_CONFIG_FILE" "$ASSISTANTS_DIR/claude/config.json" > "${CLAUDE_CONFIG_FILE}.tmp" && \
         mv "${CLAUDE_CONFIG_FILE}.tmp" "$CLAUDE_CONFIG_FILE"
     else
-        # Create new file
-        echo '{"includeCoAuthoredBy": false}' | jq . > "$CLAUDE_CONFIG_FILE"
+        # Create new file from template
+        cp "$ASSISTANTS_DIR/claude/config.json" "$CLAUDE_CONFIG_FILE"
     fi
 else
     # Fallback: create simple JSON without jq
@@ -235,9 +242,44 @@ else
         echo "Warning: jq not found. Creating backup and overwriting config file."
         cp "$CLAUDE_CONFIG_FILE" "${CLAUDE_CONFIG_FILE}.backup"
     fi
-    echo '{"includeCoAuthoredBy": false}' > "$CLAUDE_CONFIG_FILE"
+    cp "$ASSISTANTS_DIR/claude/config.json" "$CLAUDE_CONFIG_FILE"
 fi
 
+# Create or update Codex config file (TOML format)
+CODEX_CONFIG_FILE="$HOME/.codex/config.toml"
+if [ -f "$ASSISTANTS_DIR/codex/config.toml" ] && [ -s "$ASSISTANTS_DIR/codex/config.toml" ]; then
+    if [ -f "$CODEX_CONFIG_FILE" ]; then
+        echo "Note: Codex config exists. Manual merge may be needed for TOML format."
+        echo "Template: $ASSISTANTS_DIR/codex/config.toml"
+    else
+        cp "$ASSISTANTS_DIR/codex/config.toml" "$CODEX_CONFIG_FILE"
+    fi
+fi
+
+# Create or update Gemini config file (JSON format)
+GEMINI_CONFIG_FILE="$HOME/.gemini/settings.json"
+if command -v jq >/dev/null 2>&1; then
+    # Use jq for proper JSON merging
+    if [ -f "$GEMINI_CONFIG_FILE" ]; then
+        # Merge with existing file
+        jq -s '.[0] * .[1]' "$GEMINI_CONFIG_FILE" "$ASSISTANTS_DIR/gemini/config.json" > "${GEMINI_CONFIG_FILE}.tmp" && \
+        mv "${GEMINI_CONFIG_FILE}.tmp" "$GEMINI_CONFIG_FILE"
+    else
+        # Create new file from template
+        cp "$ASSISTANTS_DIR/gemini/config.json" "$GEMINI_CONFIG_FILE"
+    fi
+else
+    # Fallback without jq
+    if [ -f "$GEMINI_CONFIG_FILE" ]; then
+        echo "Warning: jq not found. Creating backup and overwriting Gemini config."
+        cp "$GEMINI_CONFIG_FILE" "${GEMINI_CONFIG_FILE}.backup"
+    fi
+    cp "$ASSISTANTS_DIR/gemini/config.json" "$GEMINI_CONFIG_FILE"
+fi
+
+echo "✓ Merged Claude config: $CLAUDE_CONFIG_FILE"
+echo "✓ Updated Codex config: $CODEX_CONFIG_FILE"
+echo "✓ Merged Gemini config: $GEMINI_CONFIG_FILE"
 echo "✓ Created/updated global CLAUDE.md: $CLAUDE_MD_PATH"
 echo "✓ Created/updated global AGENTS.md: $CODEX_MD_PATH"
 echo "✓ Created/updated global GEMINI.md: $GEMINI_MD_PATH"
@@ -263,6 +305,12 @@ else
     cat "$CLAUDE_CONFIG_FILE"
 fi
 
+echo ""
+echo "⚙️  Documentation for global settings:"
+echo "──────────────────────────────────────────────────"
+echo "Claude:  https://docs.anthropic.com/en/docs/claude-code/settings"
+echo "Codex:   https://github.com/openai/codex/blob/main/docs/config.md"
+echo "Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md"
 echo ""
 echo "📚 Documentation for global memory files:"
 echo "──────────────────────────────────────────────────"

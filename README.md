@@ -50,10 +50,12 @@ Configure global settings for Claude, Codex, and Gemini:
 ./scripts/clean-global-assistants-configs  # Remove all configurations
 ```
 
-Creates:
-- `~/.claude/CLAUDE.md` + `~/.claude/commands/`
-- `~/.codex/AGENTS.md` + `~/.codex/prompts/` 
-- `~/.gemini/GEMINI.md` + `~/.gemini/commands/`
+Creates and merges:
+- **Settings**: `~/.claude/settings.json`, `~/.codex/config.toml`, `~/.gemini/settings.json`
+- **Memory files**: `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`
+- **Commands**: `~/.claude/commands/`, `~/.codex/prompts/`, `~/.gemini/commands/`
+
+**Safe merging**: Preserves existing settings while adding new ones.
 
 ### Adding Scripts
 Place shell scripts directly in `scripts/`:

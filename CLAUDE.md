@@ -34,9 +34,10 @@ This is a tools management system with the following structure:
 - Option 7: View All Tools - See available scripts and executables
 
 ## Assistant Configuration
-- `configure-assistants-global` - Setup global assistant settings and commands
-- `clean-global-assistants-configs` - Remove all assistant configuration files
+- `configure-assistants-global` - Setup global assistant settings, memory files, and commands
+- `clean-global-assistants-configs` - Remove all assistant configuration files and directories
 - Creates modular system with shared and assistant-specific instructions
+- Merges config settings (preserves existing): Claude JSON, Codex TOML, Gemini JSON
 - Copies command templates to appropriate directories (Claude: commands/, Codex: prompts/, Gemini: commands/)
 
 # important-instruction-reminders
