@@ -101,7 +101,7 @@ format_display() {
     fi
 }
 
-# Generate and display table
+# Generate and display interactive table
 display_table() {
     [[ ! -s "$TEMP_DATA" ]] && return
     
@@ -112,7 +112,10 @@ display_table() {
         printf "%05d|%s|%d|%d|%d|%d|%s\n" "$priority" "$repo_path" "$new_count" "$mod_count" "$stg_count" "$push_count" "$status"
     done < "$TEMP_DATA" | sort -n > "$TEMP_SORTED"
     
-    # Generate CSV output for gum table
+    # Create CSV for table and repo list
+    local temp_csv="/tmp/git_csv_$$"
+    local temp_repos="/tmp/git_repos_$$"
+    
     {
         echo "Repository Path,New,Modified,Staged,Commits,Status"
         while IFS='|' read -r priority repo_path new_count mod_count stg_count push_count status; do
@@ -123,14 +126,47 @@ display_table() {
                 "$(format_display "$stg_count" "")" \
                 "$(format_display "$push_count" "")" \
                 "$(format_display "0" "$status")"
+            # Also save just the repo path for selection
+            echo "$repo_path" >> "$temp_repos"
         done < "$TEMP_SORTED"
-    } | gum table \
-        --print \
+    } > "$temp_csv"
+    
+    # Display interactive table
+    echo "Use arrow keys to navigate, Enter to select, Ctrl+C to exit"
+    echo
+    
+    local selected_row
+    selected_row=$(gum table \
         --border rounded \
         --border.foreground 8 \
         --header.foreground 4 \
         --header.background 0 \
-        --cell.foreground 7
+        --cell.foreground 7 \
+        --selected.foreground 15 \
+        --selected.background 8 \
+        --height 20 < "$temp_csv")
+    
+    # Extract repository path from selected row
+    if [[ -n "$selected_row" && "$selected_row" != "Repository Path,New,Modified,Staged,Commits,Status" ]]; then
+        local repo_path
+        repo_path=$(echo "$selected_row" | cut -d',' -f1)
+        
+        echo "Selected: $repo_path"
+        
+        # Change to selected directory
+        if [[ -d "$repo_path" ]]; then
+            echo "Changing to directory: $repo_path"
+            echo "Starting new shell in $repo_path..."
+            echo "Type 'exit' to return to previous location"
+            cd "$repo_path" && exec "$SHELL"
+        else
+            echo "Directory not found: $repo_path"
+        fi
+    else
+        echo "No repository selected or header selected"
+    fi
+    
+    rm -f "$temp_csv" "$temp_repos"
 }
 
 # Cleanup function
@@ -144,18 +180,7 @@ main() {
     
     scan_repositories
     display_table
-    
-    # Keep output visible until Ctrl+C or Q
-    echo
-    echo "Press 'q' to quit or Ctrl+C to exit..."
-    
-    # Read single character input
-    while true; do
-        read -rsn1 key
-        if [[ "$key" == "q" || "$key" == "Q" ]]; then
-            break
-        fi
-    done
+    # No need for manual exit - table handles interaction
 }
 
 # Run main function
