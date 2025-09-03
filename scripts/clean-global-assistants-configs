@@ -32,8 +32,8 @@ while [[ $# -gt 0 ]]; do
             echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md#example-context-file-content-eg-geminimd"
             echo ""
             echo "Documentation for commands/prompts:"
+            echo "  Claude:  https://docs.anthropic.com/en/docs/claude-code/common-workflows#create-personal-slash-commands"
             echo "  Codex:   https://github.com/openai/codex/blob/main/docs/prompts.md"
-            echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md"
             echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/commands.md#example-a-pure-function-refactoring-command"
             exit 0
             ;;

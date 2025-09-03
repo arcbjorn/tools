@@ -33,8 +33,8 @@ while [[ $# -gt 0 ]]; do
             echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md#example-context-file-content-eg-geminimd"
             echo ""
             echo "Documentation for commands/prompts:"
+            echo "  Claude:  https://docs.anthropic.com/en/docs/claude-code/common-workflows#create-personal-slash-commands"
             echo "  Codex:   https://github.com/openai/codex/blob/main/docs/prompts.md"
-            echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md"
             echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/commands.md#example-a-pure-function-refactoring-command"
             exit 0
             ;;
@@ -162,6 +162,9 @@ fi
 # Copy common commands to Claude commands directory
 CLAUDE_COMMANDS_DIR="$HOME/.claude/commands"
 mkdir -p "$CLAUDE_COMMANDS_DIR"
+# Ensure source directories exist in tools
+mkdir -p "$ASSISTANTS_DIR/common/commands"
+mkdir -p "$ASSISTANTS_DIR/claude/commands"
 if [ -d "$ASSISTANTS_DIR/common/commands" ]; then
     cp -r "$ASSISTANTS_DIR/common/commands"/* "$CLAUDE_COMMANDS_DIR/" 2>/dev/null || true
 fi
@@ -182,6 +185,9 @@ fi
 # Copy common commands to Codex prompts directory
 CODEX_PROMPTS_DIR="$HOME/.codex/prompts"
 mkdir -p "$CODEX_PROMPTS_DIR"
+# Ensure source directories exist in tools
+mkdir -p "$ASSISTANTS_DIR/common/commands"
+mkdir -p "$ASSISTANTS_DIR/codex/prompts"
 if [ -d "$ASSISTANTS_DIR/common/commands" ]; then
     cp -r "$ASSISTANTS_DIR/common/commands"/* "$CODEX_PROMPTS_DIR/" 2>/dev/null || true
 fi
@@ -202,6 +208,9 @@ fi
 # Copy common commands to Gemini commands directory
 GEMINI_COMMANDS_DIR="$HOME/.gemini/commands"
 mkdir -p "$GEMINI_COMMANDS_DIR"
+# Ensure source directories exist in tools
+mkdir -p "$ASSISTANTS_DIR/common/commands"
+mkdir -p "$ASSISTANTS_DIR/gemini/commands"
 if [ -d "$ASSISTANTS_DIR/common/commands" ]; then
     cp -r "$ASSISTANTS_DIR/common/commands"/* "$GEMINI_COMMANDS_DIR/" 2>/dev/null || true
 fi
@@ -263,6 +272,6 @@ echo "Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/co
 echo ""
 echo "📝 Documentation for commands/prompts:"
 echo "──────────────────────────────────────────────────"
+echo "Claude:  https://docs.anthropic.com/en/docs/claude-code/common-workflows#create-personal-slash-commands"
 echo "Codex:   https://github.com/openai/codex/blob/main/docs/prompts.md"
-echo "Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md"
 echo "Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/commands.md#example-a-pure-function-refactoring-command"
