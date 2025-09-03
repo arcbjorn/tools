@@ -59,147 +59,167 @@ get_description() {
     esac
 }
 
-# Build menu options
-build_menu() {
-    local options=()
+# Build menu data
+build_menu_data() {
     local commands=()
+    local names=()
+    local descriptions=()
+    local counter=1
     
     # Add executables from bin/
     if [[ -d "$BIN_DIR" ]]; then
-        local bin_found=false
         for file in "$BIN_DIR"/*; do
             if [[ -f "$file" && -x "$file" ]]; then
-                if [[ "$bin_found" == false ]]; then
-                    options+=("── 📦 EXECUTABLES (bin/) ──")
-                    commands+=("")
-                    options+=("")  # Add spacing
-                    commands+=("")
-                    bin_found=true
-                fi
                 local basename=$(basename "$file")
                 local description=$(get_description "$file")
-                options+=("$basename - $description")
                 commands+=("$file")
+                names+=("$basename")
+                descriptions+=("$description")
+                ((counter++))
             fi
         done
     fi
     
     # Add scripts
     if [[ -d "$SCRIPTS_DIR" ]]; then
-        local scripts_found=false
         for file in "$SCRIPTS_DIR"/*; do
             if [[ -f "$file" && -x "$file" ]]; then
                 local basename=$(basename "$file")
                 # Skip this script itself
                 if [[ "$basename" != "tools" ]]; then
-                    if [[ "$scripts_found" == false ]]; then
-                        # Add spacing before scripts section if executables exist
-                        if [[ ${#options[@]} -gt 0 ]]; then
-                            options+=("")
-                            commands+=("")
-                        fi
-                        options+=("── 📜 SCRIPTS (scripts/) ──")
-                        commands+=("")
-                        options+=("")  # Add spacing
-                        commands+=("")
-                        scripts_found=true
-                    fi
                     local description=$(get_description "$file")
-                    options+=("$basename - $description")
                     commands+=("$file")
+                    names+=("$basename")
+                    descriptions+=("$description")
+                    ((counter++))
                 fi
             fi
         done
     fi
     
-    # Store arrays in global variables for access in main function
-    MENU_OPTIONS=("${options[@]}")
+    # Store arrays in global variables
     MENU_COMMANDS=("${commands[@]}")
+    MENU_NAMES=("${names[@]}")
+    MENU_DESCRIPTIONS=("${descriptions[@]}")
+    TOTAL_ITEMS=${#commands[@]}
+}
+
+# Display the menu
+display_menu() {
+    local counter=1
+    local in_bin_section=true
+    local bin_header_shown=false
+    local scripts_header_shown=false
+    
+    for i in "${!MENU_COMMANDS[@]}"; do
+        local file="${MENU_COMMANDS[i]}"
+        local name="${MENU_NAMES[i]}"
+        local description="${MENU_DESCRIPTIONS[i]}"
+        
+        # Check if we're in bin/ or scripts/
+        if [[ "$file" == "$BIN_DIR"/* ]]; then
+            if [[ "$bin_header_shown" == false ]]; then
+                echo -e "${CYAN}── 📦 EXECUTABLES (bin/) ──${NC}"
+                echo
+                bin_header_shown=true
+            fi
+        else
+            if [[ "$in_bin_section" == true ]]; then
+                in_bin_section=false
+                if [[ "$bin_header_shown" == true ]]; then
+                    echo
+                fi
+            fi
+            if [[ "$scripts_header_shown" == false ]]; then
+                echo -e "${CYAN}── 📜 SCRIPTS (scripts/) ──${NC}"
+                echo
+                scripts_header_shown=true
+            fi
+        fi
+        
+        printf "${YELLOW}%2d)${NC} ${GREEN}%s${NC}\n" "$counter" "$name"
+        printf "    ${WHITE}%s${NC}\n\n" "$description"
+        ((counter++))
+    done
+}
+
+# Get user selection (single keypress)
+get_selection() {
+    local choice
+    echo -ne "${YELLOW}Press (1-$TOTAL_ITEMS) or 'q' to quit: ${NC}"
+    read -n 1 -s choice
+    echo  # Add newline after keypress
+    
+    if [[ "$choice" == "q" || "$choice" == "Q" ]]; then
+        echo -e "${WHITE}Goodbye!${NC}"
+        exit 0
+    fi
+    
+    # Validate numeric input
+    if ! [[ "$choice" =~ ^[0-9]$ ]] || [[ "$choice" -lt 1 ]] || [[ "$choice" -gt $TOTAL_ITEMS ]]; then
+        echo -e "${RED}Invalid choice. Press a number between 1 and $TOTAL_ITEMS${NC}"
+        sleep 1
+        return 1
+    fi
+    
+    SELECTED_CHOICE="$choice"
+    return 0
 }
 
 # Main function
 main() {
-    # Build the menu
-    build_menu
+    # Build the menu data first
+    build_menu_data
     
-    if [[ ${#MENU_OPTIONS[@]} -eq 0 ]]; then
-        gum style --foreground 1 "No tools found in bin/ or scripts/ directories"
+    if [[ $TOTAL_ITEMS -eq 0 ]]; then
+        echo -e "${RED}No tools found in bin/ or scripts/ directories${NC}"
         exit 1
     fi
     
     while true; do
         # Clear screen and show header
         clear
-        gum style \
-            --foreground 6 --border-foreground 6 --border double \
-            --align center --width 50 --margin "1 2" --padding "2 4" \
-            'Tools Launcher' 'Select a tool to run'
+        echo -e "${CYAN}╭─────────────────────────────────────╮${NC}"
+        echo -e "${CYAN}│${NC}            ${MAGENTA}Tools Launcher${NC}             ${CYAN}│${NC}"
+        echo -e "${CYAN}╰─────────────────────────────────────╯${NC}"
+        echo
         
-        # Show the menu
-        local selected=$(printf '%s\n' "${MENU_OPTIONS[@]}" | gum choose \
-            --header "Select a tool to run:" \
-            --cursor-prefix "→ " \
-            --selected-prefix "✓ " \
-            --unselected-prefix "  " \
-            --cursor.foreground="3" \
-            --header.foreground="5" \
-            --item.foreground="7" \
-            --selected.foreground="2" \
-            --height 20)
+        # Display the menu
+        display_menu
         
-        # Handle selection
-        if [[ -z "$selected" ]]; then
-            gum style --foreground 8 "Goodbye!"
-            exit 0
-        fi
-        
-        # Find the corresponding command
-        local command=""
-        for i in "${!MENU_OPTIONS[@]}"; do
-            if [[ "${MENU_OPTIONS[i]}" == "$selected" ]]; then
-                command="${MENU_COMMANDS[i]}"
-                break
-            fi
-        done
-        
-        # Skip header rows
-        if [[ -z "$command" ]]; then
+        # Get user selection
+        if ! get_selection; then
+            echo
             continue
         fi
         
-        # Get tool name for display
+        # Find the corresponding command
+        local command="${MENU_COMMANDS[$((SELECTED_CHOICE - 1))]}"
         local tool_name=$(basename "$command")
         
         echo
-        gum style --foreground 5 "Running: $tool_name"
-        gum style --foreground 8 "Command: $command"
+        echo -e "${MAGENTA}Running: ${GREEN}$tool_name${NC}"
+        echo -e "${WHITE}Command: $command${NC}"
         echo
         
-        # Ask for arguments
-        local args=""
-        if gum confirm "Add arguments?"; then
-            gum style --foreground 8 "Tip: Most tools support --help or -h flag"
-            args=$(gum input --placeholder "Enter arguments (optional)")
-        fi
-        
-        # Run the command
-        echo
-        gum style --foreground 2 "Executing..."
+        # Run the command directly
+        echo -e "${GREEN}Executing...${NC}"
         echo "────────────────────────────────────────"
         
-        if [[ -n "$args" ]]; then
-            $command $args
-        else
-            $command
-        fi
+        $command
         
         echo
         echo "────────────────────────────────────────"
-        gum style --foreground 8 "Command completed."
+        echo -e "${WHITE}Command completed.${NC}"
+        echo
         
         # Ask if user wants to continue
-        if ! gum confirm "Run another tool?"; then
-            gum style --foreground 8 "Goodbye!"
+        echo -ne "${YELLOW}Run another tool? Press any key to continue or 'q' to quit: ${NC}"
+        read -n 1 -s continue_choice
+        echo
+        
+        if [[ "$continue_choice" == "q" || "$continue_choice" == "Q" ]]; then
+            echo -e "${WHITE}Goodbye!${NC}"
             exit 0
         fi
     done
