@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Script to clean/remove global assistant configuration files
+set -e
+
+INTERACTIVE=true
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --non-interactive)
+            INTERACTIVE=false
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: $0 [OPTIONS]"
+            echo "Options:"
+            echo "  --non-interactive   Run without prompts"
+            echo "  --help, -h          Show this help message"
+            echo ""
+            echo "This script removes global assistant configuration files:"
+            echo "  - ~/.claude/CLAUDE.md"
+            echo "  - ~/.codex/AGENTS.md"
+            echo "  - ~/.gemini/GEMINI.md"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+echo "Clean Global Assistant Configurations"
+echo "===================================="
+
+# Define config files
+CLAUDE_MD_PATH="$HOME/.claude/CLAUDE.md"
+CODEX_MD_PATH="$HOME/.codex/AGENTS.md"
+GEMINI_MD_PATH="$HOME/.gemini/GEMINI.md"
+
+# Check which files exist
+FILES_TO_REMOVE=()
+if [ -f "$CLAUDE_MD_PATH" ]; then
+    FILES_TO_REMOVE+=("$CLAUDE_MD_PATH")
+fi
+if [ -f "$CODEX_MD_PATH" ]; then
+    FILES_TO_REMOVE+=("$CODEX_MD_PATH")
+fi
+if [ -f "$GEMINI_MD_PATH" ]; then
+    FILES_TO_REMOVE+=("$GEMINI_MD_PATH")
+fi
+
+if [ ${#FILES_TO_REMOVE[@]} -eq 0 ]; then
+    echo "No assistant configuration files found to remove."
+    exit 0
+fi
+
+echo "Found the following configuration files:"
+for file in "${FILES_TO_REMOVE[@]}"; do
+    echo "  - $file"
+done
+
+# Confirm before proceeding (interactive mode only)
+if [ "$INTERACTIVE" = true ]; then
+    echo ""
+    read -p "Remove these files? (y/N): " confirm
+    
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        echo "Aborted."
+        exit 1
+    fi
+fi
+
+echo ""
+echo "Removing global assistant configuration files..."
+
+# Remove the files
+for file in "${FILES_TO_REMOVE[@]}"; do
+    if [ -f "$file" ]; then
+        rm "$file"
+        echo "✓ Removed: $file"
+    fi
+done
+
+echo ""
+echo "Global assistant configuration files removed successfully!"
