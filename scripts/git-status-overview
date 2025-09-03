@@ -144,6 +144,18 @@ main() {
     
     scan_repositories
     display_table
+    
+    # Keep output visible until Ctrl+C or Q
+    echo
+    echo "Press 'q' to quit or Ctrl+C to exit..."
+    
+    # Read single character input
+    while true; do
+        read -rsn1 key
+        if [[ "$key" == "q" || "$key" == "Q" ]]; then
+            break
+        fi
+    done
 }
 
 # Run main function
