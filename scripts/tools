@@ -52,7 +52,7 @@ get_description() {
         
         # Git tools
         git-status-overview) echo "System-wide git repository status overview with priority sorting" ;;
-        
+        github-stats) echo "Display GitHub repository statistics and metrics" ;;
         
         # Default for unknown tools
         *) echo "$(basename "$file")" ;;
