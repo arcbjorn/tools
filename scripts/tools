@@ -31,9 +31,8 @@ get_description() {
     local basename=$(basename "$file")
     
     case "$basename" in
-        # Claude Code configuration
-        configure-cc-global) echo "Set global Claude Code settings (includeCoAuthoredBy: false)" ;;
-        configure-cc-ast-grep) echo "Add comprehensive ast-grep documentation to Claude memory" ;;
+        # Assistant configuration
+        configure-assistants-global) echo "Configure global assistant settings (Claude, Codex, Gemini)" ;;
         configure-cc-glm) echo "Configure Claude GLM integration" ;;
         
         # Repository management
