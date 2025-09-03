@@ -39,7 +39,6 @@ get_description() {
         # Repository management
         attach-existing-repo) echo "Attach existing project directory to new remote repository" ;;
         init-new-repo) echo "Create new repository with full configuration" ;;
-        init-assistants-minimal) echo "Add AGENTS.md and basic assistants configuration" ;;
         
         # Tools management
         set-permissions) echo "Make scripts and binaries executable" ;;
