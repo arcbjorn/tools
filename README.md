@@ -46,14 +46,21 @@ This will:
 ### AI Assistant Configuration
 Configure global settings for Claude, Codex, and Gemini:
 ```bash
-./scripts/configure-assistants-global   # Setup global configurations
+./scripts/configure-assistants-global      # Setup global configurations
 ./scripts/clean-global-assistants-configs  # Remove all configurations
+./scripts/create-assistant-command         # Create new command/prompt templates
+./scripts/sync-assistant-commands          # Sync commands to global directories
 ```
 
 Creates and merges:
 - **Settings**: `~/.claude/settings.json`, `~/.codex/config.toml`, `~/.gemini/settings.json`
 - **Memory files**: `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`
 - **Commands**: `~/.claude/commands/`, `~/.codex/prompts/`, `~/.gemini/commands/`
+
+**Command Creation**: 
+- Claude/Gemini: `.md` files in `commands/` (uses `$ARGUMENTS` placeholder)
+- Codex: `.md/.toml` files in `prompts/` (entire file becomes prompt)
+- Common: `.md` files synced to all assistants
 
 **Safe merging**: Preserves existing settings while adding new ones.
 

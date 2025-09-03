@@ -36,9 +36,11 @@ This is a tools management system with the following structure:
 ## Assistant Configuration
 - `configure-assistants-global` - Setup global assistant settings, memory files, and commands
 - `clean-global-assistants-configs` - Remove all assistant configuration files and directories
+- `create-assistant-command` - Create new assistant command/prompt templates
+- `sync-assistant-commands` - Sync assistant commands from tools to global directories
 - Creates modular system with shared and assistant-specific instructions
 - Merges config settings (preserves existing): Claude JSON, Codex TOML, Gemini JSON
-- Copies command templates to appropriate directories (Claude: commands/, Codex: prompts/, Gemini: commands/)
+- Command formats: Claude/Gemini (.md in commands/), Codex (.md/.toml in prompts/), Common (.md, syncs to all)
 
 # Theme and Colors
 Use omarchy-compatible terminal palette colors in scripts:
