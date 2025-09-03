@@ -123,10 +123,13 @@ fi
 if [ "$INTERACTIVE" = true ]; then
     echo ""
     echo "This will:"
-    echo "  1. Set includeCoAuthoredBy: false in Claude config"
-    echo "  2. Create/update ~/.claude/CLAUDE.md with tool preferences"
-    echo "  3. Create/update ~/.codex/AGENTS.md with tool preferences"
-    echo "  4. Create/update ~/.gemini/GEMINI.md with tool preferences"
+    echo "  1. Merge settings into ~/.claude/settings.json"
+    echo "  2. Merge settings into ~/.codex/config.toml"  
+    echo "  3. Merge settings into ~/.gemini/settings.json"
+    echo "  4. Create/update ~/.claude/CLAUDE.md with tool preferences"
+    echo "  5. Create/update ~/.codex/AGENTS.md with tool preferences"
+    echo "  6. Create/update ~/.gemini/GEMINI.md with tool preferences"
+    echo "  7. Copy commands to respective directories"
     echo ""
     read -p "Proceed? (Y/n): " confirm
     
@@ -294,15 +297,36 @@ echo "Claude memory file: $CLAUDE_MD_PATH"
 echo "Codex memory file: $CODEX_MD_PATH"
 echo "Gemini memory file: $GEMINI_MD_PATH"
 
-# Display the current settings
-if command -v jq >/dev/null 2>&1; then
-    echo ""
-    echo "Current settings:"
+# Display the current settings for all assistants
+echo ""
+echo "Current settings:"
+echo "─────────────────"
+
+echo "Claude ($CLAUDE_CONFIG_FILE):"
+if command -v jq >/dev/null 2>&1 && [ -f "$CLAUDE_CONFIG_FILE" ]; then
     jq . "$CLAUDE_CONFIG_FILE"
-else
-    echo ""
-    echo "Current settings:"
+elif [ -f "$CLAUDE_CONFIG_FILE" ]; then
     cat "$CLAUDE_CONFIG_FILE"
+else
+    echo "  (not configured)"
+fi
+
+echo ""
+echo "Codex ($CODEX_CONFIG_FILE):"
+if [ -f "$CODEX_CONFIG_FILE" ]; then
+    cat "$CODEX_CONFIG_FILE"
+else
+    echo "  (not configured)"
+fi
+
+echo ""
+echo "Gemini ($GEMINI_CONFIG_FILE):"
+if command -v jq >/dev/null 2>&1 && [ -f "$GEMINI_CONFIG_FILE" ]; then
+    jq . "$GEMINI_CONFIG_FILE"
+elif [ -f "$GEMINI_CONFIG_FILE" ]; then
+    cat "$GEMINI_CONFIG_FILE"
+else
+    echo "  (not configured)"
 fi
 
 echo ""
