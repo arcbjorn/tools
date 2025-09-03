@@ -1,0 +1,352 @@
+#!/bin/bash
+
+# Script to configure global assistant settings
+set -e
+
+INTERACTIVE=true
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --non-interactive)
+            INTERACTIVE=false
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: $0 [OPTIONS]"
+            echo "Options:"
+            echo "  --non-interactive   Run without prompts"
+            echo "  --help, -h          Show this help message"
+            echo ""
+            echo "This script configures global assistant settings:"
+            echo "  - Sets Claude includeCoAuthoredBy: false"
+            echo "  - Creates/updates ~/.claude/CLAUDE.md with tool preferences"
+            echo "  - Creates/updates ~/.codex/AGENTS.md with tool preferences"
+            echo "  - Creates/updates ~/.gemini/GEMINI.md with tool preferences"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+echo "Configure Global Assistant Settings"
+echo "===================================="
+
+# Check required commands
+echo "Checking required commands..."
+MISSING_COMMANDS=()
+
+if ! command -v claude >/dev/null 2>&1; then
+    MISSING_COMMANDS+=("claude")
+fi
+
+if ! command -v codex >/dev/null 2>&1; then
+    MISSING_COMMANDS+=("codex")
+fi
+
+if ! command -v gemini >/dev/null 2>&1; then
+    MISSING_COMMANDS+=("gemini")
+fi
+
+if ! command -v ast-grep >/dev/null 2>&1; then
+    MISSING_COMMANDS+=("ast-grep")
+fi
+
+if [ ${#MISSING_COMMANDS[@]} -ne 0 ]; then
+    echo "Error: Missing required commands: ${MISSING_COMMANDS[*]}"
+    echo "Please install them before running this script"
+    exit 1
+fi
+
+# Determine config directories
+CLAUDE_CONFIG_DIR="$HOME/.claude"
+CLAUDE_CONFIG_FILE="$CLAUDE_CONFIG_DIR/settings.json"
+CODEX_CONFIG_DIR="$HOME/.codex"
+GEMINI_CONFIG_DIR="$HOME/.gemini"
+
+# Create config directory if it doesn't exist
+if [ ! -d "$CLAUDE_CONFIG_DIR" ]; then
+    echo "Creating Claude config directory: $CLAUDE_CONFIG_DIR"
+    mkdir -p "$CLAUDE_CONFIG_DIR"
+fi
+
+# Check if config file exists and read current settings
+if [ -f "$CLAUDE_CONFIG_FILE" ]; then
+    echo "Found existing config file: $CLAUDE_CONFIG_FILE"
+    
+    # Check if includeCoAuthoredBy is already set to false
+    if command -v jq >/dev/null 2>&1; then
+        CURRENT_VALUE=$(jq -r '.includeCoAuthoredBy // empty' "$CLAUDE_CONFIG_FILE" 2>/dev/null || echo "")
+        if [ "$CURRENT_VALUE" = "false" ]; then
+            echo "includeCoAuthoredBy is already set to false"
+            if [ "$INTERACTIVE" = true ]; then
+                read -p "Continue anyway? (y/N): " confirm
+                if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+                    echo "Aborted."
+                    exit 0
+                fi
+            else
+                echo "No changes needed."
+                exit 0
+            fi
+        fi
+    fi
+else
+    echo "Creating new config file: $CLAUDE_CONFIG_FILE"
+fi
+
+# Confirm before proceeding (interactive mode only)
+if [ "$INTERACTIVE" = true ]; then
+    echo ""
+    echo "This will:"
+    echo "  1. Set includeCoAuthoredBy: false in Claude config"
+    echo "  2. Create/update ~/.claude/CLAUDE.md with tool preferences"
+    echo "  3. Create/update ~/.codex/AGENTS.md with tool preferences"
+    echo "  4. Create/update ~/.gemini/GEMINI.md with tool preferences"
+    echo ""
+    read -p "Proceed? (Y/n): " confirm
+    
+    if [[ "$confirm" =~ ^[Nn]$ ]]; then
+        echo "Aborted."
+        exit 1
+    fi
+fi
+
+echo ""
+echo "Configuring global assistant settings..."
+
+# Directories should already exist - just verify
+if [ ! -d "$CLAUDE_CONFIG_DIR" ]; then
+    echo "Error: $CLAUDE_CONFIG_DIR directory not found. Please ensure claude is properly installed."
+    exit 1
+fi
+
+if [ ! -d "$CODEX_CONFIG_DIR" ]; then
+    echo "Error: $CODEX_CONFIG_DIR directory not found. Please ensure codex is properly installed."
+    exit 1
+fi
+
+if [ ! -d "$GEMINI_CONFIG_DIR" ]; then
+    echo "Error: $GEMINI_CONFIG_DIR directory not found. Please ensure gemini is properly installed."
+    exit 1
+fi
+
+# Create/update global CLAUDE.md
+CLAUDE_MD_PATH="$HOME/.claude/CLAUDE.md"
+echo "Creating/updating global CLAUDE.md..."
+
+cat > "$CLAUDE_MD_PATH" << 'EOF'
+COMMIT INSTRUCTIONS: use conventional commits guidelines, 1 GRANULAR COMMIT PER 1 GOAL, MESSAGE 50 CHARACTERS MAX, NO DESCRIPTION
+
+## Tool Preferences
+- **USE ast-grep** for code searches instead of grep/ripgrep when searching for:
+  - Function/class/method definitions
+  - Code patterns and structures  
+  - Language-specific syntax
+  - Code transformations and refactoring
+
+- **USE grep/ripgrep** for:
+  - Simple text searches
+  - Documentation/comments
+  - Log files
+  - Non-code content
+
+## ast-grep Quick Reference
+```bash
+# Search functions
+ast-grep -p 'function $name($$$) { $$$ }' -l javascript
+
+# Search classes
+ast-grep -p 'class $name { $$$ }' -l typescript
+
+# Search and replace
+ast-grep -p 'var $v = $val' -r 'const $v = $val' -l javascript
+
+# Interactive mode for safe transformations
+ast-grep -p 'pattern' -r 'replacement' -l language --interactive
+```
+
+## Pattern Variables
+- `$VAR` - matches any single AST node
+- `$$$` - matches zero or more nodes (ellipsis)
+- `$$VAR` - matches multiple nodes as array
+
+## Always Use Standard CLI Tools Whenever Possible
+- **Use official CLI tools for ALL tasks**, not just initialization
+- **Go Backend**: Use `go mod init` to initialize Go modules, `go get` for dependencies
+- **React Frontend**: Use `pnpm create vite@latest my-app -- --template react`
+- **Alpine.js**: `pnpm init vite@latest my-alpine-app -- --template vanilla-ts`
+- ALWAYS use `pnpm` instead of `npm`
+- ALWAYS use Typescript instead of Javascript
+- **Svelte**: `npx sv create my-app`
+- **Rust**: `cargo new`, `cargo add`, `cargo check`, `cargo test`
+- **Zig**: `zig init`, `zig build`, `zig test`
+- **Ruby**: `bundle init`, `bundle add gem_name`, `bundle install`, `bundle exec`
+- **Ruby on Rails**: `rails new my_app`, `rails generate scaffold ModelName`, `rails db:migrate`
+- **Elixir**: `mix new my_app`, `mix phx.new my_app` (for Phoenix), `mix deps.get`, `mix test`
+- **Never manually create package.json or go.mod files**
+- **ALWAYS use official scaffolding tools**
+- **ALWAYS use language-specific package managers and build tools**
+EOF
+
+# Create/update global AGENTS.md for Codex
+CODEX_MD_PATH="$HOME/.codex/AGENTS.md"
+echo "Creating/updating global AGENTS.md..."
+
+cat > "$CODEX_MD_PATH" << 'EOF'
+COMMIT INSTRUCTIONS: use conventional commits guidelines, 1 GRANULAR COMMIT PER 1 GOAL, MESSAGE 50 CHARACTERS MAX, NO DESCRIPTION
+
+## Tool Preferences
+- **USE ast-grep** for code searches instead of grep/ripgrep when searching for:
+  - Function/class/method definitions
+  - Code patterns and structures  
+  - Language-specific syntax
+  - Code transformations and refactoring
+
+- **USE grep/ripgrep** for:
+  - Simple text searches
+  - Documentation/comments
+  - Log files
+  - Non-code content
+
+## ast-grep Quick Reference
+```bash
+# Search functions
+ast-grep -p 'function $name($$$) { $$$ }' -l javascript
+
+# Search classes
+ast-grep -p 'class $name { $$$ }' -l typescript
+
+# Search and replace
+ast-grep -p 'var $v = $val' -r 'const $v = $val' -l javascript
+
+# Interactive mode for safe transformations
+ast-grep -p 'pattern' -r 'replacement' -l language --interactive
+```
+
+## Pattern Variables
+- `$VAR` - matches any single AST node
+- `$$$` - matches zero or more nodes (ellipsis)
+- `$$VAR` - matches multiple nodes as array
+
+## Always Use Standard CLI Tools Whenever Possible
+- **Use official CLI tools for ALL tasks**, not just initialization
+- **Go Backend**: Use `go mod init` to initialize Go modules, `go get` for dependencies
+- **React Frontend**: Use `pnpm create vite@latest my-app -- --template react`
+- **Alpine.js**: `pnpm init vite@latest my-alpine-app -- --template vanilla-ts`
+- ALWAYS use `pnpm` instead of `npm`
+- ALWAYS use Typescript instead of Javascript
+- **Svelte**: `npx sv create my-app`
+- **Rust**: `cargo new`, `cargo add`, `cargo check`, `cargo test`
+- **Zig**: `zig init`, `zig build`, `zig test`
+- **Ruby**: `bundle init`, `bundle add gem_name`, `bundle install`, `bundle exec`
+- **Ruby on Rails**: `rails new my_app`, `rails generate scaffold ModelName`, `rails db:migrate`
+- **Elixir**: `mix new my_app`, `mix phx.new my_app` (for Phoenix), `mix deps.get`, `mix test`
+- **Never manually create package.json or go.mod files**
+- **ALWAYS use official scaffolding tools**
+- **ALWAYS use language-specific package managers and build tools**
+EOF
+
+# Create/update global GEMINI.md for Gemini
+GEMINI_MD_PATH="$HOME/.gemini/GEMINI.md"
+echo "Creating/updating global GEMINI.md..."
+
+cat > "$GEMINI_MD_PATH" << 'EOF'
+COMMIT INSTRUCTIONS: use conventional commits guidelines, 1 GRANULAR COMMIT PER 1 GOAL, MESSAGE 50 CHARACTERS MAX, NO DESCRIPTION
+
+## Tool Preferences
+- **USE ast-grep** for code searches instead of grep/ripgrep when searching for:
+  - Function/class/method definitions
+  - Code patterns and structures  
+  - Language-specific syntax
+  - Code transformations and refactoring
+
+- **USE grep/ripgrep** for:
+  - Simple text searches
+  - Documentation/comments
+  - Log files
+  - Non-code content
+
+## ast-grep Quick Reference
+```bash
+# Search functions
+ast-grep -p 'function $name($$$) { $$$ }' -l javascript
+
+# Search classes
+ast-grep -p 'class $name { $$$ }' -l typescript
+
+# Search and replace
+ast-grep -p 'var $v = $val' -r 'const $v = $val' -l javascript
+
+# Interactive mode for safe transformations
+ast-grep -p 'pattern' -r 'replacement' -l language --interactive
+```
+
+## Pattern Variables
+- `$VAR` - matches any single AST node
+- `$$$` - matches zero or more nodes (ellipsis)
+- `$$VAR` - matches multiple nodes as array
+
+## Always Use Standard CLI Tools Whenever Possible
+- **Use official CLI tools for ALL tasks**, not just initialization
+- **Go Backend**: Use `go mod init` to initialize Go modules, `go get` for dependencies
+- **React Frontend**: Use `pnpm create vite@latest my-app -- --template react`
+- **Alpine.js**: `pnpm init vite@latest my-alpine-app -- --template vanilla-ts`
+- ALWAYS use `pnpm` instead of `npm`
+- ALWAYS use Typescript instead of Javascript
+- **Svelte**: `npx sv create my-app`
+- **Rust**: `cargo new`, `cargo add`, `cargo check`, `cargo test`
+- **Zig**: `zig init`, `zig build`, `zig test`
+- **Ruby**: `bundle init`, `bundle add gem_name`, `bundle install`, `bundle exec`
+- **Ruby on Rails**: `rails new my_app`, `rails generate scaffold ModelName`, `rails db:migrate`
+- **Elixir**: `mix new my_app`, `mix phx.new my_app` (for Phoenix), `mix deps.get`, `mix test`
+- **Never manually create package.json or go.mod files**
+- **ALWAYS use official scaffolding tools**
+- **ALWAYS use language-specific package managers and build tools**
+EOF
+
+# Create or update the config file
+if command -v jq >/dev/null 2>&1; then
+    # Use jq if available for proper JSON handling
+    if [ -f "$CLAUDE_CONFIG_FILE" ]; then
+        # Update existing file
+        jq '.includeCoAuthoredBy = false' "$CLAUDE_CONFIG_FILE" > "${CLAUDE_CONFIG_FILE}.tmp" && \
+        mv "${CLAUDE_CONFIG_FILE}.tmp" "$CLAUDE_CONFIG_FILE"
+    else
+        # Create new file
+        echo '{"includeCoAuthoredBy": false}' | jq . > "$CLAUDE_CONFIG_FILE"
+    fi
+else
+    # Fallback: create simple JSON without jq
+    if [ -f "$CLAUDE_CONFIG_FILE" ]; then
+        echo "Warning: jq not found. Creating backup and overwriting config file."
+        cp "$CLAUDE_CONFIG_FILE" "${CLAUDE_CONFIG_FILE}.backup"
+    fi
+    echo '{"includeCoAuthoredBy": false}' > "$CLAUDE_CONFIG_FILE"
+fi
+
+echo "✓ Created/updated global CLAUDE.md: $CLAUDE_MD_PATH"
+echo "✓ Created/updated global AGENTS.md: $CODEX_MD_PATH"
+echo "✓ Created/updated global GEMINI.md: $GEMINI_MD_PATH"
+
+echo ""
+echo "Global assistant settings configured successfully!"
+echo "Claude config file: $CLAUDE_CONFIG_FILE"
+echo "Claude memory file: $CLAUDE_MD_PATH"
+echo "Codex memory file: $CODEX_MD_PATH"
+echo "Gemini memory file: $GEMINI_MD_PATH"
+
+# Display the current settings
+if command -v jq >/dev/null 2>&1; then
+    echo ""
+    echo "Current settings:"
+    jq . "$CLAUDE_CONFIG_FILE"
+else
+    echo ""
+    echo "Current settings:"
+    cat "$CLAUDE_CONFIG_FILE"
+fi
