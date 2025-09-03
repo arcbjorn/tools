@@ -101,6 +101,41 @@ format_display() {
     fi
 }
 
+# Push all repositories with unpushed commits
+push_all_repos() {
+    echo "=== Git Push Everywhere ==="
+    local pushed_count=0
+    local failed_count=0
+    
+    while IFS='|' read -r repo_path new_count mod_count stg_count push_count status; do
+        if [[ $push_count -gt 0 && "$status" != "NO-UP" ]]; then
+            echo
+            echo "📦 Pushing $repo_path ($push_count commits)..."
+            
+            if cd "$repo_path" && git push; then
+                echo "✅ Successfully pushed $repo_path"
+                ((pushed_count++))
+            else
+                echo "❌ Failed to push $repo_path"
+                ((failed_count++))
+            fi
+        fi
+    done < "$TEMP_DATA"
+    
+    echo
+    echo "=== Push Summary ==="
+    echo "✅ Successfully pushed: $pushed_count repositories"
+    [[ $failed_count -gt 0 ]] && echo "❌ Failed to push: $failed_count repositories"
+    
+    if [[ $pushed_count -eq 0 && $failed_count -eq 0 ]]; then
+        echo "🎉 No repositories need pushing - all up to date!"
+    fi
+    
+    echo
+    echo "Press any key to continue..."
+    read -n 1 -s
+}
+
 # Generate and display interactive table
 display_table() {
     [[ ! -s "$TEMP_DATA" ]] && return
@@ -112,12 +147,25 @@ display_table() {
         printf "%05d|%s|%d|%d|%d|%d|%s\n" "$priority" "$repo_path" "$new_count" "$mod_count" "$stg_count" "$push_count" "$status"
     done < "$TEMP_DATA" | sort -n > "$TEMP_SORTED"
     
+    # Check if there are repos with unpushed commits
+    local has_unpushed=false
+    while IFS='|' read -r repo_path new_count mod_count stg_count push_count status; do
+        if [[ $push_count -gt 0 && "$status" != "NO-UP" ]]; then
+            has_unpushed=true
+            break
+        fi
+    done < "$TEMP_DATA"
+    
     # Create CSV for table and repo list
     local temp_csv="/tmp/git_csv_$$"
     local temp_repos="/tmp/git_repos_$$"
     
     {
         echo "Repository Path,New,Modified,Staged,Commits,Status"
+        # Add push all option if there are unpushed commits
+        if [[ "$has_unpushed" == true ]]; then
+            echo "🚀 PUSH ALL REPOS WITH UNPUSHED COMMITS,-,-,-,-,-"
+        fi
         while IFS='|' read -r priority repo_path new_count mod_count stg_count push_count status; do
             printf "%s,%s,%s,%s,%s,%s\n" \
                 "$repo_path" \
@@ -149,6 +197,12 @@ display_table() {
     if [[ -n "$selected_row" && "$selected_row" != "Repository Path,New,Modified,Staged,Commits,Status" ]]; then
         local repo_path
         repo_path=$(echo "$selected_row" | cut -d',' -f1)
+        
+        # Check if user selected the push all option
+        if [[ "$repo_path" == "🚀 PUSH ALL REPOS WITH UNPUSHED COMMITS" ]]; then
+            push_all_repos
+            return
+        fi
         
         echo "Selected: $repo_path"
         
