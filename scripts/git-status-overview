@@ -1,0 +1,151 @@
+#!/bin/bash
+
+# Constants
+readonly TEMP_DATA="/tmp/git_data_$$"
+readonly TEMP_SORTED="/tmp/git_sorted_$$"
+
+# Excluded directories pattern
+readonly EXCLUDE_PATTERN='/(node_modules|build|dist|target|\.next|\.nuxt|vendor|bower_components|\.gradle|\.m2|\.local|\.cache|\.cargo)/'
+
+# Initialize temp file
+> "$TEMP_DATA"
+
+# Get git status for a repository
+get_repo_status() {
+    local repo_dir="$1"
+    local untracked_count=0
+    local unstaged_count=0
+    local staged_count=0
+    local unpushed_count=0
+    local upstream_status="✓"
+    
+    cd "$repo_dir" || return 1
+    
+    # Check if it's a valid git repository
+    git rev-parse --git-dir &>/dev/null || return 1
+    
+    # Count untracked files
+    local untracked_files
+    untracked_files=$(git ls-files --others --exclude-standard 2>/dev/null)
+    [[ -n "$untracked_files" ]] && untracked_count=$(echo "$untracked_files" | wc -l)
+    
+    # Count unstaged changes
+    ! git diff --quiet && unstaged_count=$(git diff --name-only | wc -l)
+    
+    # Count staged changes
+    ! git diff --cached --quiet && staged_count=$(git diff --cached --name-only | wc -l)
+    
+    # Check for unpushed commits
+    local current_branch upstream
+    current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+    
+    if [[ "$current_branch" != "HEAD" && -n "$current_branch" ]]; then
+        upstream=$(git rev-parse --abbrev-ref "$current_branch@{upstream}" 2>/dev/null)
+        
+        if [[ -n "$upstream" ]]; then
+            unpushed_count=$(git rev-list --count "$upstream..$current_branch" 2>/dev/null)
+        else
+            upstream_status="NO-UP"
+        fi
+    fi
+    
+    # Output repo data
+    printf "%s|%d|%d|%d|%d|%s\n" "$repo_dir" "$untracked_count" "$unstaged_count" "$staged_count" "$unpushed_count" "$upstream_status" >> "$TEMP_DATA"
+}
+
+# Scan all git repositories
+scan_repositories() {
+    find / -name ".git" -type d 2>/dev/null | \
+    grep -v -E "$EXCLUDE_PATTERN" | \
+    while read -r git_dir; do
+        local repo_dir
+        repo_dir=$(dirname "$git_dir")
+        
+        # Skip if we can't access the directory
+        [[ -r "$repo_dir" ]] && get_repo_status "$repo_dir"
+    done
+}
+
+# Calculate priority for sorting
+calculate_priority() {
+    local new_count="$1" mod_count="$2" stg_count="$3" push_count="$4" status="$5"
+    local priority=9999  # Default for clean repos
+    
+    if [[ $new_count -gt 0 ]]; then
+        priority=1000
+    elif [[ $mod_count -gt 0 ]]; then
+        priority=2000
+    elif [[ $stg_count -gt 0 ]]; then
+        priority=3000
+    elif [[ $push_count -gt 0 ]]; then
+        priority=4000
+    elif [[ "$status" == "NO-UP" ]]; then
+        priority=5000
+    fi
+    
+    # Add counts as secondary sort (more issues = higher priority)
+    local secondary_sort=$((10000 - new_count - mod_count - stg_count - push_count))
+    echo $((priority + secondary_sort))
+}
+
+# Format display value
+format_display() {
+    local count="$1" status="$2"
+    
+    if [[ "$status" == "NO-UP" ]]; then
+        echo "NO-UP"
+    elif [[ $count -gt 0 ]]; then
+        echo "$count"
+    else
+        echo "-"
+    fi
+}
+
+# Generate and display table
+display_table() {
+    [[ ! -s "$TEMP_DATA" ]] && return
+    
+    # Sort repos by importance
+    while IFS='|' read -r repo_path new_count mod_count stg_count push_count status; do
+        local priority
+        priority=$(calculate_priority "$new_count" "$mod_count" "$stg_count" "$push_count" "$status")
+        printf "%05d|%s|%d|%d|%d|%d|%s\n" "$priority" "$repo_path" "$new_count" "$mod_count" "$stg_count" "$push_count" "$status"
+    done < "$TEMP_DATA" | sort -n > "$TEMP_SORTED"
+    
+    # Generate CSV output for gum table
+    {
+        echo "Repository Path,New,Modified,Staged,Commits,Status"
+        while IFS='|' read -r priority repo_path new_count mod_count stg_count push_count status; do
+            printf "%s,%s,%s,%s,%s,%s\n" \
+                "$repo_path" \
+                "$(format_display "$new_count" "")" \
+                "$(format_display "$mod_count" "")" \
+                "$(format_display "$stg_count" "")" \
+                "$(format_display "$push_count" "")" \
+                "$(format_display "0" "$status")"
+        done < "$TEMP_SORTED"
+    } | gum table \
+        --print \
+        --border rounded \
+        --border.foreground 8 \
+        --header.foreground 4 \
+        --header.background 0 \
+        --cell.foreground 7
+}
+
+# Cleanup function
+cleanup() {
+    rm -f "$TEMP_DATA" "$TEMP_SORTED"
+}
+
+# Main execution
+main() {
+    trap cleanup EXIT
+    
+    scan_repositories
+    display_table
+}
+
+# Run main function
+main "$@"
+

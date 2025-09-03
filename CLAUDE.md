@@ -40,6 +40,13 @@ This is a tools management system with the following structure:
 - Merges config settings (preserves existing): Claude JSON, Codex TOML, Gemini JSON
 - Copies command templates to appropriate directories (Claude: commands/, Codex: prompts/, Gemini: commands/)
 
+# Theme and Colors
+Use omarchy-compatible terminal palette colors in scripts:
+- Terminal palette slots: `\033[38;5;1m` for red, `\033[38;5;2m` for green, etc.
+- Gum foreground: `--foreground 1` (red), `--foreground 2` (green), `--foreground 4` (blue), etc.
+- Color constants: RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, GRAY
+- Always use terminal palette slots instead of hex colors for theme consistency
+
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.
