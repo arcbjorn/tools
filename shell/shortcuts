@@ -15,6 +15,7 @@ alias grs='git reset --soft'
 alias grh='git reset --hard'
 alias gst='git stash'
 alias gstp='git stash pop'
+alias pgp='pass git push'
 
 # File listing shortcuts (eza compatible)
 alias ll='ls -la'
