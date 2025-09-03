@@ -18,15 +18,23 @@ while [[ $# -gt 0 ]]; do
             echo "  --non-interactive   Run without prompts"
             echo "  --help, -h          Show this help message"
             echo ""
-            echo "This script removes global assistant configuration files:"
+            echo "This script removes global assistant configuration files and directories:"
             echo "  - ~/.claude/CLAUDE.md"
-            echo "  - ~/.codex/AGENTS.md"
+            echo "  - ~/.codex/AGENTS.md" 
             echo "  - ~/.gemini/GEMINI.md"
+            echo "  - ~/.claude/commands/"
+            echo "  - ~/.codex/prompts/"
+            echo "  - ~/.gemini/commands/"
             echo ""
             echo "Documentation for global memory files:"
             echo "  Claude:  https://docs.anthropic.com/en/docs/claude-code/memory#determine-memory-type"
             echo "  Codex:   https://github.com/openai/codex/blob/main/docs/getting-started.md#memory-with-agentsmd"
             echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md#example-context-file-content-eg-geminimd"
+            echo ""
+            echo "Documentation for commands/prompts:"
+            echo "  Codex:   https://github.com/openai/codex/blob/main/docs/prompts.md"
+            echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md"
+            echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/commands.md#example-a-pure-function-refactoring-command"
             exit 0
             ;;
         *)
@@ -40,13 +48,17 @@ done
 echo "Clean Global Assistant Configurations"
 echo "===================================="
 
-# Define config files
+# Define config files and directories
 CLAUDE_MD_PATH="$HOME/.claude/CLAUDE.md"
 CODEX_MD_PATH="$HOME/.codex/AGENTS.md"
 GEMINI_MD_PATH="$HOME/.gemini/GEMINI.md"
+CLAUDE_COMMANDS_DIR="$HOME/.claude/commands"
+CODEX_PROMPTS_DIR="$HOME/.codex/prompts"
+GEMINI_COMMANDS_DIR="$HOME/.gemini/commands"
 
-# Check which files exist
+# Check which files and directories exist
 FILES_TO_REMOVE=()
+DIRS_TO_REMOVE=()
 if [ -f "$CLAUDE_MD_PATH" ]; then
     FILES_TO_REMOVE+=("$CLAUDE_MD_PATH")
 fi
@@ -56,21 +68,39 @@ fi
 if [ -f "$GEMINI_MD_PATH" ]; then
     FILES_TO_REMOVE+=("$GEMINI_MD_PATH")
 fi
+if [ -d "$CLAUDE_COMMANDS_DIR" ]; then
+    DIRS_TO_REMOVE+=("$CLAUDE_COMMANDS_DIR")
+fi
+if [ -d "$CODEX_PROMPTS_DIR" ]; then
+    DIRS_TO_REMOVE+=("$CODEX_PROMPTS_DIR")
+fi
+if [ -d "$GEMINI_COMMANDS_DIR" ]; then
+    DIRS_TO_REMOVE+=("$GEMINI_COMMANDS_DIR")
+fi
 
-if [ ${#FILES_TO_REMOVE[@]} -eq 0 ]; then
-    echo "No assistant configuration files found to remove."
+if [ ${#FILES_TO_REMOVE[@]} -eq 0 ] && [ ${#DIRS_TO_REMOVE[@]} -eq 0 ]; then
+    echo "No assistant configuration files or directories found to remove."
     exit 0
 fi
 
-echo "Found the following configuration files:"
-for file in "${FILES_TO_REMOVE[@]}"; do
-    echo "  - $file"
-done
+if [ ${#FILES_TO_REMOVE[@]} -gt 0 ]; then
+    echo "Found the following configuration files:"
+    for file in "${FILES_TO_REMOVE[@]}"; do
+        echo "  - $file"
+    done
+fi
+
+if [ ${#DIRS_TO_REMOVE[@]} -gt 0 ]; then
+    echo "Found the following command directories:"
+    for dir in "${DIRS_TO_REMOVE[@]}"; do
+        echo "  - $dir"
+    done
+fi
 
 # Confirm before proceeding (interactive mode only)
 if [ "$INTERACTIVE" = true ]; then
     echo ""
-    read -p "Remove these files? (y/N): " confirm
+    read -p "Remove these files and directories? (y/N): " confirm
     
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
         echo "Aborted."
@@ -79,13 +109,21 @@ if [ "$INTERACTIVE" = true ]; then
 fi
 
 echo ""
-echo "Removing global assistant configuration files..."
+echo "Removing global assistant configuration files and directories..."
 
 # Remove the files
 for file in "${FILES_TO_REMOVE[@]}"; do
     if [ -f "$file" ]; then
         rm "$file"
         echo "✓ Removed: $file"
+    fi
+done
+
+# Remove the directories
+for dir in "${DIRS_TO_REMOVE[@]}"; do
+    if [ -d "$dir" ]; then
+        rm -rf "$dir"
+        echo "✓ Removed: $dir"
     fi
 done
 

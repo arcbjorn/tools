@@ -23,11 +23,19 @@ while [[ $# -gt 0 ]]; do
             echo "  - Creates/updates ~/.claude/CLAUDE.md with tool preferences"
             echo "  - Creates/updates ~/.codex/AGENTS.md with tool preferences"
             echo "  - Creates/updates ~/.gemini/GEMINI.md with tool preferences"
+            echo "  - Copies commands to ~/.claude/commands/"
+            echo "  - Copies prompts to ~/.codex/prompts/"
+            echo "  - Copies commands to ~/.gemini/commands/"
             echo ""
             echo "Documentation for global memory files:"
             echo "  Claude:  https://docs.anthropic.com/en/docs/claude-code/memory#determine-memory-type"
             echo "  Codex:   https://github.com/openai/codex/blob/main/docs/getting-started.md#memory-with-agentsmd"
             echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md#example-context-file-content-eg-geminimd"
+            echo ""
+            echo "Documentation for commands/prompts:"
+            echo "  Codex:   https://github.com/openai/codex/blob/main/docs/prompts.md"
+            echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md"
+            echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/commands.md#example-a-pure-function-refactoring-command"
             exit 0
             ;;
         *)
@@ -151,6 +159,16 @@ if [ -s "$ASSISTANTS_DIR/claude/global_instructions.md" ]; then
     cat "$ASSISTANTS_DIR/claude/global_instructions.md" >> "$CLAUDE_MD_PATH"
 fi
 
+# Copy common commands to Claude commands directory
+CLAUDE_COMMANDS_DIR="$HOME/.claude/commands"
+mkdir -p "$CLAUDE_COMMANDS_DIR"
+if [ -d "$ASSISTANTS_DIR/common/commands" ]; then
+    cp -r "$ASSISTANTS_DIR/common/commands"/* "$CLAUDE_COMMANDS_DIR/" 2>/dev/null || true
+fi
+if [ -d "$ASSISTANTS_DIR/claude/commands" ]; then
+    cp -r "$ASSISTANTS_DIR/claude/commands"/* "$CLAUDE_COMMANDS_DIR/" 2>/dev/null || true
+fi
+
 # Create/update global AGENTS.md for Codex
 CODEX_MD_PATH="$HOME/.codex/AGENTS.md"
 echo "Creating/updating global AGENTS.md..."
@@ -161,6 +179,16 @@ if [ -s "$ASSISTANTS_DIR/codex/global_instructions.md" ]; then
     cat "$ASSISTANTS_DIR/codex/global_instructions.md" >> "$CODEX_MD_PATH"
 fi
 
+# Copy common commands to Codex prompts directory
+CODEX_PROMPTS_DIR="$HOME/.codex/prompts"
+mkdir -p "$CODEX_PROMPTS_DIR"
+if [ -d "$ASSISTANTS_DIR/common/commands" ]; then
+    cp -r "$ASSISTANTS_DIR/common/commands"/* "$CODEX_PROMPTS_DIR/" 2>/dev/null || true
+fi
+if [ -d "$ASSISTANTS_DIR/codex/prompts" ]; then
+    cp -r "$ASSISTANTS_DIR/codex/prompts"/* "$CODEX_PROMPTS_DIR/" 2>/dev/null || true
+fi
+
 # Create/update global GEMINI.md for Gemini
 GEMINI_MD_PATH="$HOME/.gemini/GEMINI.md"
 echo "Creating/updating global GEMINI.md..."
@@ -169,6 +197,16 @@ cat "$ASSISTANTS_DIR/common/global_instructions.md" > "$GEMINI_MD_PATH"
 if [ -s "$ASSISTANTS_DIR/gemini/global_instructions.md" ]; then
     echo "" >> "$GEMINI_MD_PATH"
     cat "$ASSISTANTS_DIR/gemini/global_instructions.md" >> "$GEMINI_MD_PATH"
+fi
+
+# Copy common commands to Gemini commands directory
+GEMINI_COMMANDS_DIR="$HOME/.gemini/commands"
+mkdir -p "$GEMINI_COMMANDS_DIR"
+if [ -d "$ASSISTANTS_DIR/common/commands" ]; then
+    cp -r "$ASSISTANTS_DIR/common/commands"/* "$GEMINI_COMMANDS_DIR/" 2>/dev/null || true
+fi
+if [ -d "$ASSISTANTS_DIR/gemini/commands" ]; then
+    cp -r "$ASSISTANTS_DIR/gemini/commands"/* "$GEMINI_COMMANDS_DIR/" 2>/dev/null || true
 fi
 
 # Create or update the config file
@@ -194,6 +232,9 @@ fi
 echo "✓ Created/updated global CLAUDE.md: $CLAUDE_MD_PATH"
 echo "✓ Created/updated global AGENTS.md: $CODEX_MD_PATH"
 echo "✓ Created/updated global GEMINI.md: $GEMINI_MD_PATH"
+echo "✓ Copied commands to Claude: $CLAUDE_COMMANDS_DIR"
+echo "✓ Copied prompts to Codex: $CODEX_PROMPTS_DIR"
+echo "✓ Copied commands to Gemini: $GEMINI_COMMANDS_DIR"
 
 echo ""
 echo "Global assistant settings configured successfully!"
@@ -219,3 +260,9 @@ echo "────────────────────────�
 echo "Claude:  https://docs.anthropic.com/en/docs/claude-code/memory#determine-memory-type"
 echo "Codex:   https://github.com/openai/codex/blob/main/docs/getting-started.md#memory-with-agentsmd"
 echo "Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md#example-context-file-content-eg-geminimd"
+echo ""
+echo "📝 Documentation for commands/prompts:"
+echo "──────────────────────────────────────────────────"
+echo "Codex:   https://github.com/openai/codex/blob/main/docs/prompts.md"
+echo "Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md"
+echo "Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/commands.md#example-a-pure-function-refactoring-command"
