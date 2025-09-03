@@ -158,11 +158,7 @@ echo "Initializing git repository..."
 git init
 git branch -M master
 
-# Add assistants configuration if it doesn't exist
-if [ ! -f "AGENTS.md" ]; then
-    echo "Adding assistants configuration..."
-    init-assistants-minimal
-fi
+# Skip adding assistants configuration - use global config instead
 
 # Add README if it doesn't exist
 if [ ! -f "README.md" ]; then
