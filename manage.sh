@@ -151,9 +151,11 @@ list_tools() {
 
 # Display header
 show_header() {
-    echo -e "${YELLOW}Tools Management${NC}"
-    echo -e "${WHITE}================${NC}"
-    echo ""
+    clear
+    gum style \
+        --foreground 6 --border-foreground 6 --border double \
+        --align center --width 50 --margin "1 2" --padding "2 4" \
+        'Tools Management' 'Manage your development tools'
 }
 
 # Main menu
@@ -191,8 +193,17 @@ main() {
     check_dependencies
     validate_environment
     
-    show_header
-    show_menu
+    while true; do
+        show_header
+        show_menu
+        
+        # Ask if user wants to continue
+        echo ""
+        if ! gum confirm "Run another tool?"; then
+            gum style --foreground 8 "Goodbye!"
+            cleanup_and_exit
+        fi
+    done
 }
 
 # Execute main function if script is run directly
