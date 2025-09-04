@@ -109,7 +109,7 @@ build_menu_data() {
 display_menu() {
     clear
     echo -e "${CYAN}╭─────────────────────────────────────╮${NC}"
-    echo -e "${CYAN}│${NC}            ${MAGENTA}Tools Launcher${NC}             ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}           ${MAGENTA}Tools Launcher${NC}            ${CYAN}│${NC}"
     echo -e "${CYAN}╰─────────────────────────────────────╯${NC}"
     echo
     
