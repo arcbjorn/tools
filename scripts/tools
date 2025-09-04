@@ -123,7 +123,7 @@ display_menu() {
     echo -e "${YELLOW}4)${NC}  🔍  ${GREEN}View All Tools${NC}"
     echo
     echo
-    echo -e "${YELLOW}q)${NC}  ❌  ${WHITE}Quit${NC}"
+    echo -e "${WHITE}Press ESC to quit${NC}"
     echo
 }
 
@@ -193,8 +193,7 @@ show_git_repository() {
         done
     done
     
-    echo -e "${YELLOW}b)${NC} ${WHITE}Back to main menu${NC}"
-    echo -e "${YELLOW}q)${NC} ${WHITE}Quit${NC}"
+    echo -e "${WHITE}Press ESC to go back${NC}"
     echo
 }
 
@@ -243,8 +242,7 @@ show_assistant_config() {
         done
     done
     
-    echo -e "${YELLOW}b)${NC} ${WHITE}Back to main menu${NC}"
-    echo -e "${YELLOW}q)${NC} ${WHITE}Quit${NC}"
+    echo -e "${WHITE}Press ESC to go back${NC}"
     echo
 }
 
@@ -357,7 +355,12 @@ get_selection() {
     read -n 1 -s choice
     echo
     
-    SELECTED_CHOICE="$choice"
+    # Check for ESC key (ASCII 27)
+    if [[ $(printf '%d' "'$choice") -eq 27 ]] 2>/dev/null; then
+        SELECTED_CHOICE="ESC"
+    else
+        SELECTED_CHOICE="$choice"
+    fi
     return 0
 }
 
@@ -415,7 +418,7 @@ main() {
                     2) current_menu="git" ;;
                     3) current_menu="tools" ;;
                     4) current_menu="all" ;;
-                    q|Q) echo -e "${WHITE}Goodbye!${NC}"; exit 0 ;;
+                    ESC) echo -e "${WHITE}Goodbye!${NC}"; exit 0 ;;
                     *) echo -e "${RED}Invalid choice${NC}"; sleep 1 ;;
                 esac
                 ;;
@@ -431,8 +434,7 @@ main() {
                     2) execute_tool "init-new-repo" ;;
                     3) execute_tool "git-status-overview" ;;
                     4) execute_tool "github-stats" ;;
-                    b|B) current_menu="main" ;;
-                    q|Q) echo -e "${WHITE}Goodbye!${NC}"; exit 0 ;;
+                    ESC) current_menu="main" ;;
                     *) echo -e "${RED}Invalid choice${NC}"; sleep 1 ;;
                 esac
                 if [[ "$SELECTED_CHOICE" =~ ^[1-4]$ ]]; then
@@ -450,8 +452,7 @@ main() {
                     3) execute_tool "configure-cc-glm" ;;
                     4) execute_tool "create-assistant-command" ;;
                     5) execute_tool "sync-assistant-commands" ;;
-                    b|B) current_menu="main" ;;
-                    q|Q) echo -e "${WHITE}Goodbye!${NC}"; exit 0 ;;
+                    ESC) current_menu="main" ;;
                     *) echo -e "${RED}Invalid choice${NC}"; sleep 1 ;;
                 esac
                 if [[ "$SELECTED_CHOICE" =~ ^[1-5]$ ]]; then
