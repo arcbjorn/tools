@@ -1,0 +1,26 @@
+# completion for: passcopy <field> <entry>
+_passcopy_complete() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+
+  if (( COMP_CWORD == 1 )); then
+    # Complete pass entries first
+    local prefix="${PASSWORD_STORE_DIR:-$HOME/.password-store}"
+    local entries=()
+    
+    while IFS= read -r -d '' entry; do
+      entry="${entry%.*}"
+      entry="${entry#$prefix/}"
+      entries+=("$entry")
+    done < <(find "$prefix" -name "*.gpg" -print0 2>/dev/null)
+    
+    COMPREPLY=( $(compgen -W "${entries[*]}" -- "$cur") )
+    return
+  fi
+
+  if (( COMP_CWORD == 2 )); then
+    # Complete fields second
+    COMPREPLY=( $(compgen -W 'login username email user account website street city country ip phone address notes url port host server api key token id password pin code ssn license iban swift bic name firstname lastname company otp totp secret card cvv passport' -- "$cur") )
+    return
+  fi
+}
+complete -F _passcopy_complete passcopy

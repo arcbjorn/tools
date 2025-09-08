@@ -1,8 +1,10 @@
 # Tools directory configuration
 export PATH="$HOME/tools/bin:$HOME/tools/scripts:$PATH"
 
-# Load custom shortcuts
-[ -f "$HOME/tools/shell/shortcuts" ] && source "$HOME/tools/shell/shortcuts"
-
-# Load temporary commands with secrets
-[ -f "$HOME/tools/shell/temp" ] && source "$HOME/tools/shell/temp"
+# Load all shell configuration files:
+# - shortcuts: aliases and shortcuts
+# - temp: temporary commands with secrets (shouldn't be committed)
+# - other files: shell functions and helpers
+for file in "$HOME/tools/shell"/*; do
+  [ -f "$file" ] && [ "$file" != "$HOME/tools/shell/rc" ] && source "$file"
+done

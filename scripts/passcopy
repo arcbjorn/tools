@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# passcopy - Copy specific fields from pass entries to clipboard
+
+if [[ $# -ne 2 ]]; then
+    echo "Usage: passcopy <entry> <field>"
+    echo "Fields: login username email user account website street city country ip phone address notes url port host server api key token id password pin code ssn license iban swift bic name firstname lastname company otp totp secret card cvv passport"
+    exit 1
+fi
+
+entry="$1"
+field="$2"
+
+# Get the pass entry content
+pass_content=$(pass show "$entry" 2>/dev/null)
+if [[ $? -ne 0 ]]; then
+    echo "Error: Could not find pass entry '$entry'"
+    exit 1
+fi
+
+# Extract the field value
+case "$field" in
+    "login"|"username"|"email"|"user"|"account"|"website"|"street"|"city"|"country")
+        value=$(echo "$pass_content" | grep -i "^$field:" | cut -d':' -f2- | sed 's/^ *//')
+        ;;
+    *)
+        echo "Error: Unknown field '$field'"
+        echo "Valid fields: login username email user account website street city country"
+        exit 1
+        ;;
+esac
+
+if [[ -z "$value" ]]; then
+    echo "Error: Field '$field' not found in entry '$entry'"
+    exit 1
+fi
+
+# Kill any existing passcopy clear timers
+pkill -f "sleep 45.*wl-copy --clear" 2>/dev/null
+
+# Copy to clipboard
+echo -n "$value" | wl-copy
+echo "Copied $field for $entry to clipboard (will clear in 45 seconds)"
+
+# Clear clipboard after 45 seconds in background
+(sleep 45 && wl-copy --clear) &
