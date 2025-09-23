@@ -34,6 +34,9 @@ alias connect-base='tailscale ssh admin@base'
 alias connect-nova='tailscale ssh admin@nova'
 alias connect-network='tailscale status'
 
+# GitHub shortcuts
+alias view-repo='gh repo view --web'
+
 # Show all shortcuts with syntax highlighting
 shortcuts() {
     echo ""
@@ -54,5 +57,9 @@ shortcuts() {
 
     echo "SSH/Network:"
     cat ~/tools/shell/shortcuts | grep "^alias connect-" | sort | bat --language=bash --style=plain --color=always
+    echo ""
+
+    echo "GitHub:"
+    cat ~/tools/shell/shortcuts | grep "^alias view-" | sort | bat --language=bash --style=plain --color=always
     echo ""
 }
