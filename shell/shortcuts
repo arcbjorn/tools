@@ -29,21 +29,30 @@ alias cc='claude'
 alias ccc='claude --continue'
 alias glmc='glm --continue'
 
+# SSH/Network shortcuts
+alias connect-base='tailscale ssh admin@base'
+alias connect-nova='tailscale ssh admin@nova'
+alias connect-network='tailscale status'
+
 # Show all shortcuts with syntax highlighting
 shortcuts() {
     echo ""
     echo "=== Shell Shortcuts ==="
     echo ""
-    
+
     echo "Git Commands:"
     cat ~/tools/shell/shortcuts | grep "^alias g" | sort | bat --language=bash --style=plain --color=always
     echo ""
-    
+
     echo "File Listing:"
     cat ~/tools/shell/shortcuts | grep "^alias l" | sort | bat --language=bash --style=plain --color=always
     echo ""
-    
+
     echo "Claude:"
     cat ~/tools/shell/shortcuts | grep "^alias c" | sort | bat --language=bash --style=plain --color=always
+    echo ""
+
+    echo "SSH/Network:"
+    cat ~/tools/shell/shortcuts | grep "^alias connect-" | sort | bat --language=bash --style=plain --color=always
     echo ""
 }
