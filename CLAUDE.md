@@ -1,56 +1,118 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 COMMIT INSTRUCTIONS: use conventional commits guidelines, 1 GRANULAR COMMIT PER 1 GOAL, MESSAGE 50 CHARACTERS MAX
 
-# Tools Directory Structure
-This is a tools management system with the following structure:
+# Architecture Overview
+This is a personal CLI utilities management system organized as a git repository with submodules. The architecture follows a clean separation between:
+- **Management layer**: Interactive interfaces and automation scripts
+- **Build system**: Language-agnostic compilation pipeline
+- **Runtime layer**: Shell integration and PATH management
+- **Configuration system**: Multi-assistant AI configuration management
 
-## Core Components
-- `manage.sh` - Main interface using gum for navigation (requires gum: `pacman -S gum`)
-- `shell/` - Shell configuration files
-  - `shell/rc` - Main shell config (sourced by .bashrc/.zshrc)  
-  - `shell/shortcuts` - Custom aliases and shortcuts
-- `tools_management/` - Management scripts
-  - `set-permissions.sh` - Set file permissions
-  - `init-tools.sh` - Complete setup (build, configure, permissions)
-  - `build.sh` - Build tools from sources/
-  - `configure-shell.sh` - Configure shell to source tools
-  - `sync-submodules.sh` - Update all submodules
-  - `init-new-tool.sh` - Create new tool repository
-- `scripts/` - Utility scripts (in PATH)
-- `bin/` - Compiled executables (in PATH)  
-- `sources/` - Source code as git submodules
-- `assistants/` - AI assistant configuration system
-  - `common/` - Shared instructions and commands for all assistants
-  - `claude/`, `codex/`, `gemini/` - Assistant-specific configurations
+# Common Development Tasks
 
-## Usage
-1. Run `./manage.sh` for interactive menu
-2. Use arrow keys to navigate, Enter to select
-3. All tools automatically added to PATH via shell/rc
+## Setup and Initialization
+```bash
+./manage.sh                    # Interactive management interface (requires gum)
+./tools_management/init-tools.sh    # Complete setup (build, configure, permissions)
+```
 
-## Commands to Remember
-- `./manage.sh` - Main interface
-- `tools` - Interactive launcher for all scripts and executables
-- Option 2: Initialize Tools - Complete setup for new systems
-- Option 7: View All Tools - See available scripts and executables
+## Building and Development
+```bash
+./tools_management/build.sh         # Compile all tools from sources/
+./tools_management/set-permissions.sh   # Fix executable permissions
+./tools_management/sync-submodules.sh   # Update all submodules to latest
+```
+
+## Tool Management
+```bash
+./tools_management/init-new-tool.sh     # Create new tool repository as submodule
+./tools                              # Interactive launcher for all tools
+```
 
 ## Assistant Configuration
-- `configure-assistants-global` - Setup global assistant settings, memory files, and commands
-- `clean-global-assistants-configs` - Remove all assistant configuration files and directories
-- `create-assistant-command` - Create new assistant command/prompt templates
-- `sync-assistant-commands` - Sync assistant commands from tools to global directories
-- Creates modular system with shared and assistant-specific instructions
-- Merges config settings (preserves existing): Claude JSON, Codex TOML, Gemini JSON
-- Command formats: Claude/Gemini (.md in commands/), Codex (.md/.toml in prompts/), Common (.md, syncs to all)
+```bash
+./scripts/configure-assistants-global      # Setup global AI assistant configurations
+./scripts/sync-assistant-commands          # Sync commands to global directories
+./scripts/create-assistant-command         # Create new command/prompt templates
+./scripts/clean-global-assistants-configs  # Remove all assistant configurations
+```
 
-# Theme and Colors
-Use omarchy-compatible terminal palette colors in scripts:
-- Terminal palette slots: `\033[38;5;1m` for red, `\033[38;5;2m` for green, etc.
-- Gum foreground: `--foreground 1` (red), `--foreground 2` (green), `--foreground 4` (blue), etc.
-- Color constants: RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, GRAY
+# Architecture Details
+
+## Directory Structure
+- `manage.sh` - Main interactive interface using gum for navigation
+- `shell/` - Shell configuration and runtime integration
+  - `shell/rc` - Main shell config (exports PATH, loads other configs)
+  - `shell/shortcuts` - Custom aliases and shortcuts
+- `tools_management/` - Core management automation scripts
+- `scripts/` - Utility scripts (automatically in PATH)
+- `bin/` - Compiled executables from sources/ (automatically in PATH)
+- `sources/` - Source code repositories as git submodules
+- `assistants/` - Multi-assistant AI configuration system
+
+## Build System Architecture
+The build system in `tools_management/build.sh` automatically detects project types and compiles:
+- **Rust projects**: `cargo build --release` → copies executables to bin/
+- **Go projects**: `go build -o $TOOLS_DIR/bin/`
+- **Zig projects**: `zig build --prefix $TOOLS_DIR/`
+- **Make projects**: `make` with PREFIX support
+- **Python projects**: pip installs to bin/
+
+## Shell Integration System
+`shell/rc` is the core runtime component that:
+- Exports `$HOME/tools/bin:$HOME/tools/scripts` to PATH
+- Dynamically sources all files in `shell/` directory (except itself)
+- Provides modular configuration loading for shortcuts, temp secrets, and functions
+
+## AI Assistant Configuration Architecture
+The `assistants/` system provides centralized configuration management:
+- **`common/`**: Shared instructions and commands synced to all assistants
+- **`claude/`, `codex/`, `gemini/`**: Assistant-specific configurations
+- **Configuration merging**: Preserves existing settings while adding new ones
+- **Command formats**:
+  - Claude/Gemini: `.md` files in `commands/` (uses `$ARGUMENTS` placeholder)
+  - Codex: `.md/.toml` files in `prompts/` (entire file becomes prompt)
+  - Common: `.md` files automatically synced to all assistants
+
+# Development Guidelines
+
+## Submodule Development Workflow
+1. **Working on submodules locally**:
+   ```bash
+   cd sources/your-tool
+   # Make changes, commit, push as normal
+   git add . && git commit -m "fix: some bug" && git push
+   ```
+
+2. **Compile and test locally**:
+   ```bash
+   ./tools_management/build.sh  # Compile from current local state
+   ```
+
+3. **Sync parent repo with latest submodule versions**:
+   ```bash
+   git submodule update --remote && git add . && git commit -m "chore: update all submodules" && git push
+   ```
+
+## Theme and Color System
+Scripts use omarchy-compatible terminal palette colors:
+- Terminal palette slots: `\033[38;5;1m` (red), `\033[38;5;2m` (green), etc.
+- Gum foreground: `--foreground 1` (red), `--foreground 2` (green), `--foreground 4` (blue)
+- Color constants defined: RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, GRAY
 - Always use terminal palette slots instead of hex colors for theme consistency
 
-# important-instruction-reminders
-Do what has been asked; nothing more, nothing less.
-NEVER create files unless they're absolutely necessary for achieving your goal.
-ALWAYS prefer editing an existing file to creating a new one.
-NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
+## Key Implementation Notes
+- **PATH management**: Handled automatically by `shell/rc` - tools and scripts are immediately available
+- **Permissions**: `tools_management/set-permissions.sh` handles executable permissions for both scripts/ and bin/
+- **Language detection**: Build system automatically detects Rust (Cargo.toml), Go (go.mod), Zig (build.zig), Make (Makefile)
+- **Configuration merging**: Assistant configs preserve existing settings while adding new ones
+- **Interactive interfaces**: Main interfaces (`manage.sh`, `tools`) use gum for navigation
+
+# Important Reminders
+- Do what has been asked; nothing more, nothing less
+- ALWAYS prefer editing an existing file to creating a new one
+- NEVER create files unless absolutely necessary for achieving your goal
+- NEVER proactively create documentation files (*.md) or README files unless explicitly requested
