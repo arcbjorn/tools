@@ -10,7 +10,7 @@ You MUST follow these commit guidelines exactly:
 ## Rules (MANDATORY)
 1. **Message Length**: Maximum 50 characters total
 2. **One Goal Per Commit**: Each commit should accomplish exactly one specific goal
-3. **No Body/Footer**: Only use the subject line
+3. **Single Line Only**: One line commit message only (no description/body required)
 4. **Lowercase**: Use lowercase for type, scope, and description
 5. **No Period**: Do not end with a period
 6. **Scope Required**: Always include scope in parentheses
