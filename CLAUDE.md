@@ -35,9 +35,13 @@ This is a personal CLI utilities management system organized as a git repository
 ## Assistant Configuration
 ```bash
 ./scripts/configure-assistants-global      # Setup global AI assistant configurations
-./scripts/sync-assistant-commands          # Sync commands to global directories
 ./scripts/create-assistant-command         # Create new command/prompt templates
 ./scripts/clean-global-assistants-configs  # Remove all assistant configurations
+
+# Sync commands to global directories (overwrites global configs)
+echo "y" | ./scripts/sync-assistant-commands -t all  # Auto-confirm sync all
+./scripts/sync-assistant-commands -t claude          # Sync only Claude
+./scripts/sync-assistant-commands -n                 # Dry run
 ```
 
 # Architecture Details
