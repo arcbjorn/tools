@@ -9,18 +9,19 @@ You MUST follow these commit guidelines exactly:
 
 ## Rules (MANDATORY)
 1. **Message Length**: Maximum 50 characters total
-2. **One Goal Per Commit**: Each commit should accomplish exactly one specific goal
-3. **Single Line Only**: One line commit message only (no description/body required)
-4. **Lowercase**: Use lowercase for type, scope, and description
-5. **No Period**: Do not end with a period
-6. **Scope Required**: Always include scope in parentheses
+2. **One Commit Per File/Folder**: 1 conventional commit for 1 file OR 1 folder (folder only if absolutely same change across all files, e.g., rename)
+3. **One Goal Per Commit**: Each commit should accomplish exactly one specific goal
+4. **Single Line Only**: One line commit message only (no description/body required)
+5. **Lowercase**: Use lowercase for type, scope, and description
+6. **No Period**: Do not end with a period
+7. **Scope Required**: Always include scope in parentheses
 
 ## Types (use these exact words)
 - `feat` - new feature
-- `fix` - bug fix  
+- `fix` - bug fix
 - `docs` - documentation only
 - `style` - formatting, missing semicolons (no code change)
-- `refactor` - code restructuring without changing functionality
+- `ref` - code restructuring without changing functionality
 - `test` - adding/correcting tests
 - `chore` - build process, auxiliary tools, libraries
 
@@ -35,7 +36,7 @@ You MUST follow these commit guidelines exactly:
 feat(auth): add dark mode toggle
 fix(login): resolve timeout issue
 docs(readme): update installation guide
-refactor(api): simplify user validation
+ref(api): simplify user validation
 test(auth): add unit tests for login
 chore(deps): update dependencies
 ```
