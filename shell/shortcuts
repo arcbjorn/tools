@@ -30,9 +30,9 @@ alias ccc='claude --continue'
 alias glmc='glm --continue'
 
 # SSH/Network shortcuts
-alias connect-base='tailscale ssh admin@base'
-alias connect-nova='tailscale ssh admin@nova'
-alias connect-network='tailscale status'
+alias base='tailscale ssh admin@base'
+alias nova='tailscale ssh admin@nova'
+alias status='tailscale status'
 
 # GitHub shortcuts
 alias view-repo='gh repo view --web'
@@ -56,7 +56,7 @@ shortcuts() {
     echo ""
 
     echo "SSH/Network:"
-    cat ~/tools/shell/shortcuts | grep "^alias connect-" | sort | bat --language=bash --style=plain --color=always
+    cat ~/tools/shell/shortcuts | grep -E "^alias (base|nova|status)" | sort | bat --language=bash --style=plain --color=always
     echo ""
 
     echo "GitHub:"
