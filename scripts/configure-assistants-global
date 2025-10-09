@@ -233,11 +233,11 @@ if command -v jq >/dev/null 2>&1; then
     # Use jq for proper JSON merging
     if [ -f "$CLAUDE_CONFIG_FILE" ]; then
         # Merge with existing file
-        jq -s '.[0] * .[1]' "$CLAUDE_CONFIG_FILE" "$ASSISTANTS_DIR/claude/config.json" > "${CLAUDE_CONFIG_FILE}.tmp" && \
+        jq -s '.[0] * .[1]' "$CLAUDE_CONFIG_FILE" "$ASSISTANTS_DIR/claude/settings.json" > "${CLAUDE_CONFIG_FILE}.tmp" && \
         mv "${CLAUDE_CONFIG_FILE}.tmp" "$CLAUDE_CONFIG_FILE"
     else
         # Create new file from template
-        cp "$ASSISTANTS_DIR/claude/config.json" "$CLAUDE_CONFIG_FILE"
+        cp "$ASSISTANTS_DIR/claude/settings.json" "$CLAUDE_CONFIG_FILE"
     fi
 else
     # Fallback: create simple JSON without jq
@@ -245,7 +245,7 @@ else
         echo "Warning: jq not found. Creating backup and overwriting config file."
         cp "$CLAUDE_CONFIG_FILE" "${CLAUDE_CONFIG_FILE}.backup"
     fi
-    cp "$ASSISTANTS_DIR/claude/config.json" "$CLAUDE_CONFIG_FILE"
+    cp "$ASSISTANTS_DIR/claude/settings.json" "$CLAUDE_CONFIG_FILE"
 fi
 
 # Create or update Codex config file (TOML format)
