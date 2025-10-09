@@ -1,0 +1,18 @@
+{
+  "claude-code-workflows": {
+    "source": {
+      "source": "github",
+      "repo": "wshobson/agents"
+    },
+    "installLocation": "/home/arc/.claude/plugins/marketplaces/claude-code-workflows",
+    "lastUpdated": "2025-10-09T23:35:04.993Z"
+  },
+  "claude-code-templates": {
+    "source": {
+      "source": "github",
+      "repo": "davila7/claude-code-templates"
+    },
+    "installLocation": "/home/arc/.claude/plugins/marketplaces/claude-code-templates",
+    "lastUpdated": "2025-10-09T23:36:46.744Z"
+  }
+}
