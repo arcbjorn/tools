@@ -14,5 +14,13 @@
     },
     "installLocation": "/home/arc/.claude/plugins/marketplaces/claude-code-templates",
     "lastUpdated": "2025-10-09T23:36:46.744Z"
+  },
+  "docker": {
+    "source": {
+      "source": "github",
+      "repo": "docker/claude-plugins"
+    },
+    "installLocation": "/home/arc/.claude/plugins/marketplaces/docker",
+    "lastUpdated": "2025-10-12T13:10:25.294Z"
   }
 }
