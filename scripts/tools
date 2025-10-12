@@ -37,6 +37,7 @@ get_description() {
         configure-cc-glm) echo "Configure Claude GLM integration" ;;
         create-assistant-command) echo "Create new assistant command/prompt templates" ;;
         sync-assistant-commands) echo "Sync assistant commands to global directories" ;;
+        save-current-claude-code-plugins) echo "Save current Claude Code plugins to repository" ;;
         
         # Repository management
         attach-existing-repo) echo "Attach existing project directory to new remote repository" ;;
@@ -206,7 +207,7 @@ show_assistant_config() {
     echo
     
     local counter=1
-    local assistant_tools=("configure-assistants-global" "clean-global-assistants-configs" "configure-cc-glm" "create-assistant-command" "sync-assistant-commands")
+    local assistant_tools=("configure-assistants-global" "clean-global-assistants-configs" "configure-cc-glm" "create-assistant-command" "sync-assistant-commands" "save-current-claude-code-plugins")
     local bin_shown=false
     local scripts_shown=false
     
@@ -452,10 +453,11 @@ main() {
                     3) execute_tool "configure-cc-glm" ;;
                     4) execute_tool "create-assistant-command" ;;
                     5) execute_tool "sync-assistant-commands" ;;
+                    6) execute_tool "save-current-claude-code-plugins" ;;
                     ESC) current_menu="main" ;;
                     *) echo -e "${RED}Invalid choice${NC}"; sleep 1 ;;
                 esac
-                if [[ "$SELECTED_CHOICE" =~ ^[1-5]$ ]]; then
+                if [[ "$SELECTED_CHOICE" =~ ^[1-6]$ ]]; then
                     echo -ne "${YELLOW}Press any key to continue...${NC}"
                     read -n 1 -s
                     echo
