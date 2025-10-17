@@ -26,7 +26,7 @@ show_help() {
     echo "  claude: ~/.claude/commands/"
     echo "  codex: ~/.codex/prompts/"
     echo "  gemini: ~/.gemini/commands/"
-    echo "  opencode: ~/.opencode/commands/"
+    echo "  opencode: ~/.config/opencode/command/"
     echo
     echo -e "${YELLOW}Examples:${NC}"
     echo "  $0                 # Interactive selection with gum"
@@ -79,7 +79,7 @@ get_global_info() {
             echo "$HOME/.gemini/commands"
             ;;
         opencode)
-            echo "$HOME/.opencode/commands"
+            echo "$HOME/.config/opencode/command"
             ;;
         *)
             echo ""
