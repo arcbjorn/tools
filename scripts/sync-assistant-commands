@@ -18,7 +18,7 @@ show_help() {
     echo -e "${CYAN}Usage:${NC} $0 [OPTIONS]"
     echo
     echo -e "${YELLOW}Options:${NC}"
-    echo "  -t, --type TYPE    Sync specific assistant type: claude, codex, gemini, common, all"
+    echo "  -t, --type TYPE    Sync specific assistant type: claude, codex, gemini, opencode, common, all"
     echo "  -n, --dry-run      Show what would be synced without making changes"
     echo "  -h, --help         Show this help"
     echo
@@ -26,6 +26,7 @@ show_help() {
     echo "  claude: ~/.claude/commands/"
     echo "  codex: ~/.codex/prompts/"
     echo "  gemini: ~/.gemini/commands/"
+    echo "  opencode: ~/.opencode/commands/"
     echo
     echo -e "${YELLOW}Examples:${NC}"
     echo "  $0                 # Interactive selection with gum"
@@ -49,6 +50,7 @@ interactive_selection() {
         "Claude only" \
         "Codex only" \
         "Gemini only" \
+        "OpenCode only" \
         "Common commands only" \
         "Cancel")
     
@@ -57,6 +59,7 @@ interactive_selection() {
         "Claude only") echo "claude" ;;
         "Codex only") echo "codex" ;;
         "Gemini only") echo "gemini" ;;
+        "OpenCode only") echo "opencode" ;;
         "Common commands only") echo "common" ;;
         "Cancel"|"") echo "cancel" ;;
         *) echo "cancel" ;;
@@ -74,6 +77,9 @@ get_global_info() {
             ;;
         gemini)
             echo "$HOME/.gemini/commands"
+            ;;
+        opencode)
+            echo "$HOME/.opencode/commands"
             ;;
         *)
             echo ""
@@ -163,11 +169,11 @@ sync_commands() {
 
 sync_common_commands() {
     local dry_run="$1"
-    
+
     echo -e "${MAGENTA}Syncing common commands to all assistants:${NC}"
-    
-    # Sync common commands to claude, codex, and gemini
-    for target_type in claude codex gemini; do
+
+    # Sync common commands to claude, codex, gemini, and opencode
+    for target_type in claude codex gemini opencode; do
         sync_commands "common" "$target_type" "$dry_run"
         echo
     done
@@ -215,8 +221,8 @@ main() {
     fi
     
     # Validate sync type
-    if [[ ! "$sync_type" =~ ^(all|common|claude|codex|gemini)$ ]]; then
-        echo -e "${RED}Error:${NC} Invalid type '$sync_type'. Must be: all, common, claude, codex, or gemini"
+    if [[ ! "$sync_type" =~ ^(all|common|claude|codex|gemini|opencode)$ ]]; then
+        echo -e "${RED}Error:${NC} Invalid type '$sync_type'. Must be: all, common, claude, codex, gemini, or opencode"
         exit 1
     fi
     
@@ -246,12 +252,14 @@ main() {
             echo
             sync_commands "gemini" "gemini" "$dry_run"
             echo
+            sync_commands "opencode" "opencode" "$dry_run"
+            echo
             sync_common_commands "$dry_run"
             ;;
         common)
             sync_common_commands "$dry_run"
             ;;
-        claude|codex|gemini)
+        claude|codex|gemini|opencode)
             sync_commands "$sync_type" "$sync_type" "$dry_run"
             ;;
     esac
