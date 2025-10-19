@@ -28,9 +28,11 @@ while [[ $# -gt 0 ]]; do
             echo "  - Creates/updates ~/.gemini/GEMINI.md with tool preferences"
             echo "  - Creates/updates ~/.config/opencode/OPENCODE.md with tool preferences"
             echo "  - Copies commands to ~/.claude/commands/"
+            echo "  - Copies agents to ~/.claude/agents/"
             echo "  - Copies prompts to ~/.codex/prompts/"
             echo "  - Copies commands to ~/.gemini/commands/"
             echo "  - Copies commands to ~/.config/opencode/command/"
+            echo "  - Copies agents to ~/.config/opencode/agent/"
             echo ""
             echo "Documentation for global settings:"
             echo "  Claude:   https://docs.anthropic.com/en/docs/claude-code/settings"
@@ -143,6 +145,7 @@ if [ "$INTERACTIVE" = true ]; then
     echo "  7. Create/update ~/.gemini/GEMINI.md with tool preferences"
     echo "  8. Create/update ~/.config/opencode/OPENCODE.md with tool preferences"
     echo "  9. Copy commands to respective directories"
+    echo " 10. Copy agents to ~/.claude/agents/ and ~/.config/opencode/agent/"
     echo ""
     read -p "Proceed? (Y/n): " confirm
     
@@ -200,6 +203,15 @@ if [ -d "$ASSISTANTS_DIR/claude/commands" ]; then
     cp -r "$ASSISTANTS_DIR/claude/commands"/* "$CLAUDE_COMMANDS_DIR/" 2>/dev/null || true
 fi
 
+# Copy Claude agents to global agent directory
+CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
+mkdir -p "$CLAUDE_AGENTS_DIR"
+# Ensure source agent directory exists in tools
+mkdir -p "$ASSISTANTS_DIR/claude/agents"
+if [ -d "$ASSISTANTS_DIR/claude/agents" ]; then
+    cp -r "$ASSISTANTS_DIR/claude/agents"/* "$CLAUDE_AGENTS_DIR/" 2>/dev/null || true
+fi
+
 # Create/update global AGENTS.md for Codex
 CODEX_MD_PATH="$HOME/.codex/AGENTS.md"
 echo "Creating/updating global AGENTS.md..."
@@ -222,6 +234,7 @@ fi
 if [ -d "$ASSISTANTS_DIR/codex/prompts" ]; then
     cp -r "$ASSISTANTS_DIR/codex/prompts"/* "$CODEX_PROMPTS_DIR/" 2>/dev/null || true
 fi
+
 
 # Create/update global GEMINI.md for Gemini
 GEMINI_MD_PATH="$HOME/.gemini/GEMINI.md"
@@ -267,6 +280,15 @@ if [ -d "$ASSISTANTS_DIR/common/commands" ]; then
 fi
 if [ -d "$ASSISTANTS_DIR/opencode/commands" ]; then
     cp -r "$ASSISTANTS_DIR/opencode/commands"/* "$OPENCODE_COMMANDS_DIR/" 2>/dev/null || true
+fi
+
+# Copy OpenCode agents to global agent directory
+OPENCODE_AGENTS_DIR="$HOME/.config/opencode/agent"
+mkdir -p "$OPENCODE_AGENTS_DIR"
+# Ensure source agent directory exists in tools
+mkdir -p "$ASSISTANTS_DIR/opencode/agent"
+if [ -d "$ASSISTANTS_DIR/opencode/agent" ]; then
+    cp -r "$ASSISTANTS_DIR/opencode/agent"/* "$OPENCODE_AGENTS_DIR/" 2>/dev/null || true
 fi
 
 # Create or update Claude config file
@@ -353,9 +375,11 @@ echo "✓ Created/updated global AGENTS.md: $CODEX_MD_PATH"
 echo "✓ Created/updated global GEMINI.md: $GEMINI_MD_PATH"
 echo "✓ Created/updated global OPENCODE.md: $OPENCODE_MD_PATH"
 echo "✓ Copied commands to Claude: $CLAUDE_COMMANDS_DIR"
+echo "✓ Copied agents to Claude: $CLAUDE_AGENTS_DIR"
 echo "✓ Copied prompts to Codex: $CODEX_PROMPTS_DIR"
 echo "✓ Copied commands to Gemini: $GEMINI_COMMANDS_DIR"
 echo "✓ Copied commands to OpenCode: $OPENCODE_COMMANDS_DIR"
+echo "✓ Copied agents to OpenCode: $OPENCODE_AGENTS_DIR"
 
 echo ""
 echo "Global assistant settings configured successfully!"
