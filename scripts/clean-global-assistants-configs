@@ -18,13 +18,17 @@ while [[ $# -gt 0 ]]; do
             echo "  --non-interactive   Run without prompts"
             echo "  --help, -h          Show this help message"
             echo ""
-            echo "This script removes global assistant memory files and command directories:"
+            echo "This script removes global assistant memory files, command directories, and agent directories:"
             echo "  - ~/.claude/CLAUDE.md"
-            echo "  - ~/.codex/AGENTS.md" 
+            echo "  - ~/.codex/AGENTS.md"
             echo "  - ~/.gemini/GEMINI.md"
+            echo "  - ~/.config/opencode/OPENCODE.md"
             echo "  - ~/.claude/commands/"
+            echo "  - ~/.claude/agents/"
             echo "  - ~/.codex/prompts/"
             echo "  - ~/.gemini/commands/"
+            echo "  - ~/.config/opencode/command/"
+            echo "  - ~/.config/opencode/agent/"
             echo ""
             echo "NOTE: Does NOT remove main config files (settings.json, config.toml)"
             echo ""
@@ -32,6 +36,7 @@ while [[ $# -gt 0 ]]; do
             echo "  Claude:  https://docs.anthropic.com/en/docs/claude-code/settings"
             echo "  Codex:   https://github.com/openai/codex/blob/main/docs/config.md"
             echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md"
+            echo "  OpenCode: https://opencode.ai/docs/config/"
             echo ""
             echo "Documentation for global memory files:"
             echo "  Claude:  https://docs.anthropic.com/en/docs/claude-code/memory#determine-memory-type"
@@ -42,6 +47,7 @@ while [[ $# -gt 0 ]]; do
             echo "  Claude:  https://docs.anthropic.com/en/docs/claude-code/common-workflows#create-personal-slash-commands"
             echo "  Codex:   https://github.com/openai/codex/blob/main/docs/prompts.md"
             echo "  Gemini:  https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/commands.md#example-a-pure-function-refactoring-command"
+            echo "  OpenCode: https://opencode.ai/docs/commands/"
             exit 0
             ;;
         *)
@@ -59,9 +65,11 @@ echo "===================================="
 CLAUDE_MD_PATH="$HOME/.claude/CLAUDE.md"
 CODEX_MD_PATH="$HOME/.codex/AGENTS.md"
 GEMINI_MD_PATH="$HOME/.gemini/GEMINI.md"
+OPENCODE_MD_PATH="$HOME/.config/opencode/OPENCODE.md"
 CLAUDE_COMMANDS_DIR="$HOME/.claude/commands"
 CODEX_PROMPTS_DIR="$HOME/.codex/prompts"
 GEMINI_COMMANDS_DIR="$HOME/.gemini/commands"
+OPENCODE_COMMANDS_DIR="$HOME/.config/opencode/command"
 
 # Check which files and directories exist
 FILES_TO_REMOVE=()
@@ -75,6 +83,9 @@ fi
 if [ -f "$GEMINI_MD_PATH" ]; then
     FILES_TO_REMOVE+=("$GEMINI_MD_PATH")
 fi
+if [ -f "$OPENCODE_MD_PATH" ]; then
+    FILES_TO_REMOVE+=("$OPENCODE_MD_PATH")
+fi
 if [ -d "$CLAUDE_COMMANDS_DIR" ]; then
     DIRS_TO_REMOVE+=("$CLAUDE_COMMANDS_DIR")
 fi
@@ -83,6 +94,9 @@ if [ -d "$CODEX_PROMPTS_DIR" ]; then
 fi
 if [ -d "$GEMINI_COMMANDS_DIR" ]; then
     DIRS_TO_REMOVE+=("$GEMINI_COMMANDS_DIR")
+fi
+if [ -d "$OPENCODE_COMMANDS_DIR" ]; then
+    DIRS_TO_REMOVE+=("$OPENCODE_COMMANDS_DIR")
 fi
 
 if [ ${#FILES_TO_REMOVE[@]} -eq 0 ] && [ ${#DIRS_TO_REMOVE[@]} -eq 0 ]; then
