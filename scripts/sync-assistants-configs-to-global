@@ -18,7 +18,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --non-interactive   Run without prompts"
             echo "  --help, -h          Show this help message"
             echo ""
-            echo "This script configures global assistant settings:"
+            echo "This script syncs assistant configs from local to global:"
             echo "  - Merges settings into ~/.claude/settings.json"
             echo "  - Merges settings into ~/.codex/config.toml"
             echo "  - Merges settings into ~/.gemini/settings.json"
@@ -61,8 +61,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-echo "Configure Global Assistant Settings"
-echo "===================================="
+echo "Sync Assistant Configs to Global"
+echo "================================="
 
 # Check required commands
 echo "Checking required commands..."
@@ -382,7 +382,7 @@ echo "✓ Copied commands to OpenCode: $OPENCODE_COMMANDS_DIR"
 echo "✓ Copied agents to OpenCode: $OPENCODE_AGENTS_DIR"
 
 echo ""
-echo "Global assistant settings configured successfully!"
+echo "Assistant configs synced to global successfully!"
 echo "Claude config file: $CLAUDE_CONFIG_FILE"
 echo "Claude memory file: $CLAUDE_MD_PATH"
 echo "Codex memory file: $CODEX_MD_PATH"

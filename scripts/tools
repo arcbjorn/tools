@@ -32,7 +32,7 @@ get_description() {
     
     case "$basename" in
         # Assistant configuration
-        configure-assistants-global) echo "Configure global assistant settings (Claude, Codex, Gemini, OpenCode)" ;;
+        sync-assistants-configs-to-global) echo "Deploy configs, commands, agents for Claude, Codex, Gemini, OpenCode" ;;
         clean-global-assistants-configs) echo "Remove global assistant configuration files" ;;
         configure-cc-glm) echo "Configure Claude GLM integration" ;;
         create-assistant-command) echo "Create new assistant command/prompt/agent templates" ;;
@@ -207,7 +207,7 @@ show_assistant_config() {
     echo
     
     local counter=1
-    local assistant_tools=("configure-assistants-global" "clean-global-assistants-configs" "configure-cc-glm" "create-assistant-command" "sync-assistant-commands" "save-current-claude-plugins")
+    local assistant_tools=("sync-assistants-configs-to-global" "clean-global-assistants-configs" "configure-cc-glm" "create-assistant-command" "sync-assistant-commands" "save-current-claude-plugins")
     local bin_shown=false
     local scripts_shown=false
     
@@ -448,7 +448,7 @@ main() {
                 show_assistant_config
                 get_selection
                 case "$SELECTED_CHOICE" in
-                    1) execute_tool "configure-assistants-global" ;;
+                    1) execute_tool "sync-assistants-configs-to-global" ;;
                     2) execute_tool "clean-global-assistants-configs" ;;
                     3) execute_tool "configure-cc-glm" ;;
                     4) execute_tool "create-assistant-command" ;;
