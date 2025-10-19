@@ -23,14 +23,15 @@ show_help() {
     echo "  -h, --help         Show this help"
     echo
     echo -e "${YELLOW}Global directories (will be overwritten):${NC}"
-    echo "  claude: ~/.claude/commands/"
+    echo "  claude: ~/.claude/commands/ and ~/.claude/agents/"
     echo "  codex: ~/.codex/prompts/"
     echo "  gemini: ~/.gemini/commands/"
-    echo "  opencode: ~/.config/opencode/command/"
+    echo "  opencode: ~/.config/opencode/command/ and ~/.config/opencode/agent/"
     echo
     echo -e "${YELLOW}Examples:${NC}"
     echo "  $0                 # Interactive selection with gum"
-    echo "  $0 -t claude       # Overwrite only Claude global commands"
+    echo "  $0 -t claude       # Overwrite only Claude global commands and agents"
+    echo "  $0 -t opencode     # Overwrite only OpenCode global commands and agents"
     echo "  $0 -n              # Dry run - show what would be synced"
 }
 
@@ -80,6 +81,36 @@ get_global_info() {
             ;;
         opencode)
             echo "$HOME/.config/opencode/command"
+            ;;
+        *)
+            echo ""
+            ;;
+    esac
+}
+
+get_global_agents_info() {
+    local type="$1"
+    case "$type" in
+        claude)
+            echo "$HOME/.claude/agents"
+            ;;
+        opencode)
+            echo "$HOME/.config/opencode/agent"
+            ;;
+        *)
+            echo ""
+            ;;
+    esac
+}
+
+get_source_agents_dir() {
+    local type="$1"
+    case "$type" in
+        claude)
+            echo "agents"
+            ;;
+        opencode)
+            echo "agent"
             ;;
         *)
             echo ""
@@ -167,6 +198,81 @@ sync_commands() {
     echo -e "${GREEN}Synced $copied files${NC}"
 }
 
+sync_agents() {
+    local source_type="$1"
+    local target_type="$2"
+    local dry_run="$3"
+
+    local source_dir="$ASSISTANTS_DIR/$source_type"
+    local global_dir
+    global_dir="$(get_global_agents_info "$target_type")"
+
+    if [[ -z "$global_dir" ]]; then
+        # Only Claude and OpenCode support agents
+        return 0
+    fi
+
+    if [[ ! -d "$source_dir" ]]; then
+        echo -e "${YELLOW}Warning:${NC} Source directory does not exist: $source_dir"
+        return 0
+    fi
+
+    local agents_subdir
+    agents_subdir="$(get_source_agents_dir "$source_type")"
+    local full_source_dir="$source_dir/$agents_subdir"
+
+    if [[ ! -d "$full_source_dir" ]]; then
+        echo -e "${GRAY}No $agents_subdir directory in $source_dir${NC}"
+        return 0
+    fi
+
+    local file_count
+    file_count=$(find "$full_source_dir" -maxdepth 1 -type f | wc -l)
+
+    if [[ $file_count -eq 0 ]]; then
+        echo -e "${GRAY}No agents to sync from $full_source_dir${NC}"
+        return 0
+    fi
+
+    echo -e "${BLUE}Syncing agents:${NC} $source_type -> $target_type ($file_count files)"
+    echo -e "${GRAY}Source:${NC} $full_source_dir"
+    echo -e "${GRAY}Target:${NC} $global_dir"
+
+    if [[ "$dry_run" == "true" ]]; then
+        echo -e "${YELLOW}[DRY RUN]${NC} Would:"
+        echo -e "  ${RED}✗${NC} Remove all existing agents in $global_dir"
+        echo -e "  ${GREEN}+${NC} Copy from $full_source_dir:"
+        find "$full_source_dir" -maxdepth 1 -type f -printf "    %f\n"
+        return 0
+    fi
+
+    # Remove existing global directory and recreate
+    if [[ -d "$global_dir" ]]; then
+        echo -e "  ${RED}✗${NC} Removing existing global agent directory"
+        rm -rf "$global_dir"
+    fi
+
+    # Create fresh target directory
+    mkdir -p "$global_dir"
+
+    # Copy all files
+    local copied=0
+    while IFS= read -r -d '' file; do
+        local filename
+        filename="$(basename "$file")"
+        local target_file="$global_dir/$filename"
+
+        if cp "$file" "$target_file"; then
+            echo -e "  ${GREEN}+${NC} $filename"
+            ((copied++))
+        else
+            echo -e "  ${RED}✗${NC} Failed to copy $filename"
+        fi
+    done < <(find "$full_source_dir" -maxdepth 1 -type f -print0)
+
+    echo -e "${GREEN}Synced $copied agents${NC}"
+}
+
 sync_common_commands() {
     local dry_run="$1"
 
@@ -247,12 +353,14 @@ main() {
             echo -e "${CYAN}Overwriting all global commands with local versions${NC}"
             echo
             sync_commands "claude" "claude" "$dry_run"
+            sync_agents "claude" "claude" "$dry_run"
             echo
             sync_commands "codex" "codex" "$dry_run"
             echo
             sync_commands "gemini" "gemini" "$dry_run"
             echo
             sync_commands "opencode" "opencode" "$dry_run"
+            sync_agents "opencode" "opencode" "$dry_run"
             echo
             sync_common_commands "$dry_run"
             ;;
@@ -261,6 +369,11 @@ main() {
             ;;
         claude|codex|gemini|opencode)
             sync_commands "$sync_type" "$sync_type" "$dry_run"
+            # Sync agents for Claude and OpenCode only
+            if [[ "$sync_type" == "claude" || "$sync_type" == "opencode" ]]; then
+                echo
+                sync_agents "$sync_type" "$sync_type" "$dry_run"
+            fi
             ;;
     esac
     
