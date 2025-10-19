@@ -1,0 +1,175 @@
+#!/usr/bin/env bash
+
+# Script to save current Claude Code plugins (commands + agents) from global config to local repository
+
+# Colors for omarchy theme
+RED='\033[38;5;1m'
+GREEN='\033[38;5;2m'
+YELLOW='\033[38;5;3m'
+BLUE='\033[38;5;4m'
+CYAN='\033[38;5;6m'
+NC='\033[0m'
+
+TOOLS_DIR="/home/arc/tools"
+CLAUDE_GLOBAL_COMMANDS="$HOME/.claude/commands"
+CLAUDE_GLOBAL_AGENTS="$HOME/.claude/agents"
+CLAUDE_LOCAL_COMMANDS="$TOOLS_DIR/assistants/claude/commands"
+CLAUDE_LOCAL_AGENTS="$TOOLS_DIR/assistants/claude/agents"
+
+show_help() {
+    echo -e "${CYAN}Usage:${NC} $0 [OPTIONS]"
+    echo
+    echo -e "${YELLOW}Description:${NC}"
+    echo "  Saves current Claude Code plugins (commands + agents) from global config to local repository"
+    echo "  This allows you to version control your Claude Code plugins after installing them."
+    echo
+    echo -e "${YELLOW}What it copies:${NC}"
+    echo "  - Commands: ~/.claude/commands/ → assistants/claude/commands/"
+    echo "  - Agents: ~/.claude/agents/ → assistants/claude/agents/"
+    echo
+    echo -e "${YELLOW}Options:${NC}"
+    echo "  -n, --dry-run      Show what would be copied without making changes"
+    echo "  -h, --help         Show this help"
+    echo
+    echo -e "${YELLOW}Sources:${NC}"
+    echo "  Commands: $CLAUDE_GLOBAL_COMMANDS"
+    echo "  Agents: $CLAUDE_GLOBAL_AGENTS"
+    echo
+    echo -e "${YELLOW}Destinations:${NC}"
+    echo "  Commands: $CLAUDE_LOCAL_COMMANDS"
+    echo "  Agents: $CLAUDE_LOCAL_AGENTS"
+}
+
+# Parse arguments
+DRY_RUN=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -n|--dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}Error:${NC} Unknown option: $1"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+echo -e "${CYAN}Save Current Claude Code Plugins${NC}"
+echo "=================================="
+echo
+
+# Check if source directories exist
+COMMANDS_EXIST=false
+AGENTS_EXIST=false
+
+if [ -d "$CLAUDE_GLOBAL_COMMANDS" ]; then
+    COMMANDS_EXIST=true
+    echo -e "${GREEN}✓${NC} Found commands directory: $CLAUDE_GLOBAL_COMMANDS"
+else
+    echo -e "${YELLOW}⚠${NC} No commands directory found: $CLAUDE_GLOBAL_COMMANDS"
+fi
+
+if [ -d "$CLAUDE_GLOBAL_AGENTS" ]; then
+    AGENTS_EXIST=true
+    echo -e "${GREEN}✓${NC} Found agents directory: $CLAUDE_GLOBAL_AGENTS"
+else
+    echo -e "${YELLOW}⚠${NC} No agents directory found: $CLAUDE_GLOBAL_AGENTS"
+fi
+
+if [ "$COMMANDS_EXIST" = false ] && [ "$AGENTS_EXIST" = false ]; then
+    echo
+    echo -e "${RED}Error:${NC} No Claude Code configurations found to save"
+    echo "Make sure you have installed Claude Code plugins or have existing commands/agents"
+    exit 1
+fi
+
+echo
+
+# Copy commands if they exist
+if [ "$COMMANDS_EXIST" = true ]; then
+    echo -e "${BLUE}Processing commands:${NC}"
+    echo -e "Source: ${CYAN}$CLAUDE_GLOBAL_COMMANDS${NC}"
+    echo -e "Target: ${CYAN}$CLAUDE_LOCAL_COMMANDS${NC}"
+
+    if [ "$DRY_RUN" = true ]; then
+        echo -e "${YELLOW}[DRY RUN]${NC} Would copy:"
+        find "$CLAUDE_GLOBAL_COMMANDS" -maxdepth 1 -type f -printf "  - %f\n"
+        echo
+    else
+        # Create destination directory
+        mkdir -p "$CLAUDE_LOCAL_COMMANDS"
+
+        # Copy all files
+        local copied=0
+        local total=0
+        while IFS= read -r -d '' file; do
+            ((total++))
+            local filename
+            filename="$(basename "$file")"
+            local target_file="$CLAUDE_LOCAL_COMMANDS/$filename"
+
+            if cp "$file" "$target_file"; then
+                echo -e "  ${GREEN}+${NC} $filename"
+                ((copied++))
+            else
+                echo -e "  ${RED}✗${NC} Failed to copy $filename"
+            fi
+        done < <(find "$CLAUDE_GLOBAL_COMMANDS" -maxdepth 1 -type f -print0)
+
+        echo -e "${GREEN}✓${NC} Copied $copied/$total command files"
+        echo
+    fi
+fi
+
+# Copy agents if they exist
+if [ "$AGENTS_EXIST" = true ]; then
+    echo -e "${BLUE}Processing agents:${NC}"
+    echo -e "Source: ${CYAN}$CLAUDE_GLOBAL_AGENTS${NC}"
+    echo -e "Target: ${CYAN}$CLAUDE_LOCAL_AGENTS${NC}"
+
+    if [ "$DRY_RUN" = true ]; then
+        echo -e "${YELLOW}[DRY RUN]${NC} Would copy:"
+        find "$CLAUDE_GLOBAL_AGENTS" -maxdepth 1 -type f -printf "  - %f\n"
+        echo
+    else
+        # Create destination directory
+        mkdir -p "$CLAUDE_LOCAL_AGENTS"
+
+        # Copy all files
+        local copied=0
+        local total=0
+        while IFS= read -r -d '' file; do
+            ((total++))
+            local filename
+            filename="$(basename "$file")"
+            local target_file="$CLAUDE_LOCAL_AGENTS/$filename"
+
+            if cp "$file" "$target_file"; then
+                echo -e "  ${GREEN}+${NC} $filename"
+                ((copied++))
+            else
+                echo -e "  ${RED}✗${NC} Failed to copy $filename"
+            fi
+        done < <(find "$CLAUDE_GLOBAL_AGENTS" -maxdepth 1 -type f -print0)
+
+        echo -e "${GREEN}✓${NC} Copied $copied/$total agent files"
+        echo
+    fi
+fi
+
+if [ "$DRY_RUN" = false ]; then
+    echo -e "${GREEN}✓${NC} Successfully saved Claude Code configurations"
+    echo -e "${CYAN}Tip:${NC} Commit these changes to version control with:"
+    echo -e "  ${YELLOW}git add assistants/claude/commands assistants/claude/agents${NC}"
+    echo -e "  ${YELLOW}git commit -m 'feat(claude): add saved commands and agents from plugins'${NC}"
+    echo
+    echo -e "${CYAN}Note:${NC} Use 'sync-assistant-commands -t claude' to deploy these to other systems"
+else
+    echo -e "${YELLOW}[DRY RUN]${NC} No changes made. Run without -n to apply."
+fi
