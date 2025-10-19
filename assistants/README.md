@@ -40,6 +40,7 @@ assistants.
 
 - `claude/` - Claude-specific configuration and agents
 - `codex/` - Codex-specific configuration
-- `common/` - Shared commands and configurations
+- `source/` - Source of truth for commands, agents and global configurations
 - `gemini/` - Gemini-specific configuration
 - `opencode/` - OpenCode-specific configuration
+
