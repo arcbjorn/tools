@@ -29,20 +29,20 @@ readonly NC='\033[0m'
 get_description() {
     local file="$1"
     local basename=$(basename "$file")
-    
+
     case "$basename" in
         # Assistant configuration
-        sync-assistants-configs-to-global) echo "Deploy configs, commands, agents for Claude, Codex, Gemini, OpenCode" ;;
+        assistants-cli) echo "Assistant CLI - generate, sync, and check configurations" ;;
         clean-global-assistants-configs) echo "Remove global assistant configuration files" ;;
         configure-cc-glm) echo "Configure Claude GLM integration" ;;
         create-assistant-command) echo "Create new assistant command/prompt/agent templates" ;;
         sync-assistant-commands) echo "Sync assistant commands and agents to global directories" ;;
         save-current-claude-plugins) echo "Save Claude plugins (commands+agents) to repository" ;;
-        
+
         # Repository management
         attach-existing-repo) echo "Attach existing project directory to new remote repository" ;;
         init-new-repo) echo "Create new repository with full configuration" ;;
-        
+
         # Tools management
         set-permissions) echo "Make scripts and binaries executable" ;;
         sync-submodules) echo "Update all git submodules to latest versions" ;;
@@ -50,11 +50,11 @@ get_description() {
         init-tools) echo "Complete setup: build, configure, permissions" ;;
         configure-shell) echo "Setup shell to source tools configuration" ;;
         init-new-tool) echo "Initialize new tool repository as submodule" ;;
-        
+
         # Git tools
         git-status-overview) echo "System-wide git repository status overview with priority sorting" ;;
         github-stats) echo "Display GitHub repository statistics and metrics" ;;
-        
+
         # Default for unknown tools
         *) echo "$(basename "$file")" ;;
     esac
@@ -205,19 +205,19 @@ show_assistant_config() {
     echo -e "${CYAN}│${NC}    ${MAGENTA}Assistant Configuration${NC}     ${CYAN}│${NC}"
     echo -e "${CYAN}╰─────────────────────────────────────╯${NC}"
     echo
-    
+
     local counter=1
-    local assistant_tools=("sync-assistants-configs-to-global" "clean-global-assistants-configs" "configure-cc-glm" "create-assistant-command" "sync-assistant-commands" "save-current-claude-plugins")
+    local assistant_tools=("assistants-cli" "clean-global-assistants-configs" "configure-cc-glm" "create-assistant-command" "sync-assistant-commands" "save-current-claude-plugins")
     local bin_shown=false
     local scripts_shown=false
-    
+
     for tool in "${assistant_tools[@]}"; do
         # Find tool and check if it's in bin/ or scripts/
         for i in "${!MENU_NAMES[@]}"; do
             if [[ "${MENU_NAMES[i]}" == "$tool" ]]; then
                 local file="${MENU_COMMANDS[i]}"
                 local description="${MENU_DESCRIPTIONS[i]}"
-                
+
                 # Show appropriate header
                 if [[ "$file" == "$BIN_DIR"/* && "$bin_shown" == false ]]; then
                     echo -e "${CYAN}── 📦 EXECUTABLES (bin/) ──${NC}"
@@ -233,7 +233,7 @@ show_assistant_config() {
                     echo
                     scripts_shown=true
                 fi
-                
+
                 echo -e "${YELLOW}$counter)${NC} ${GREEN}$tool${NC}"
                 echo -e "   ${WHITE}$description${NC}"
                 echo
@@ -242,7 +242,7 @@ show_assistant_config() {
             fi
         done
     done
-    
+
     echo -e "${WHITE}Press ESC to go back${NC}"
     echo
 }
@@ -367,32 +367,46 @@ get_selection() {
 
 # Execute tool by name
 execute_tool() {
-    local tool_name="$1"
-    
+    local tool_input="$1"
+
+    # Handle commands with arguments (like "assistants-cli sync-global")
+    local tool_name="$tool_input"
+    local command_args=""
+
+    if [[ "$tool_input" == *" "* ]]; then
+        tool_name=$(echo "$tool_input" | cut -d' ' -f1)
+        command_args=$(echo "$tool_input" | cut -d' ' -f2-)
+    fi
+
     # Find the command for this tool
     for i in "${!MENU_NAMES[@]}"; do
         if [[ "${MENU_NAMES[i]}" == "$tool_name" ]]; then
             local command="${MENU_COMMANDS[i]}"
-            
+
             echo
-            echo -e "${MAGENTA}Running: ${GREEN}$tool_name${NC}"
-            echo -e "${WHITE}Command: $command${NC}"
+            echo -e "${MAGENTA}Running: ${GREEN}$tool_input${NC}"
+            echo -e "${WHITE}Command: $command $command_args${NC}"
             echo
-            
+
             echo -e "${GREEN}Executing...${NC}"
             echo "────────────────────────────────────────"
-            
-            $command
-            
+
+            # Execute with arguments if provided
+            if [[ -n "$command_args" ]]; then
+                $command $command_args
+            else
+                $command
+            fi
+
             echo
             echo "────────────────────────────────────────"
             echo -e "${WHITE}Command completed.${NC}"
             echo
-            
+
             return 0
         fi
     done
-    
+
     echo -e "${RED}Tool not found: $tool_name${NC}"
     return 1
 }
@@ -448,7 +462,21 @@ main() {
                 show_assistant_config
                 get_selection
                 case "$SELECTED_CHOICE" in
-                    1) execute_tool "sync-assistants-configs-to-global" ;;
+                    1)
+                        echo -e "${MAGENTA}Assistant CLI Commands:${NC}"
+                        echo "1) sync-global - Sync assistant configs to global directories"
+                        echo "2) gen all - Generate all assistant configs"
+                        echo "3) doctor - Check assistant configurations"
+                        echo -ne "${YELLOW}Enter choice: ${NC}"
+                        read -n 1 -s cli_choice
+                        echo
+                        case "$cli_choice" in
+                            1) execute_tool "assistants-cli sync-global" ;;
+                            2) execute_tool "assistants-cli gen all" ;;
+                            3) execute_tool "assistants-cli doctor" ;;
+                            *) echo -e "${RED}Invalid choice${NC}"; sleep 1 ;;
+                        esac
+                        ;;
                     2) execute_tool "clean-global-assistants-configs" ;;
                     3) execute_tool "configure-cc-glm" ;;
                     4) execute_tool "create-assistant-command" ;;
@@ -457,7 +485,7 @@ main() {
                     ESC) current_menu="main" ;;
                     *) echo -e "${RED}Invalid choice${NC}"; sleep 1 ;;
                 esac
-                if [[ "$SELECTED_CHOICE" =~ ^[1-6]$ ]]; then
+                if [[ "$SELECTED_CHOICE" =~ ^[1-6]$ ]] || [[ "$SELECTED_CHOICE" == "1" && "$cli_choice" =~ ^[1-3]$ ]]; then
                     echo -ne "${YELLOW}Press any key to continue...${NC}"
                     read -n 1 -s
                     echo
