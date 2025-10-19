@@ -34,6 +34,9 @@ alias base='tailscale ssh admin@base'
 alias nova='tailscale ssh admin@nova'
 alias status='tailscale status'
 
+# Tools shortcuts
+alias wf='workflow'
+
 # GitHub shortcuts
 alias view-repo='gh repo view --web'
 
@@ -57,6 +60,10 @@ shortcuts() {
 
     echo "SSH/Network:"
     cat ~/tools/shell/shortcuts | grep -E "^alias (base|nova|status)" | sort | bat --language=bash --style=plain --color=always
+    echo ""
+
+    echo "Tools:"
+    cat ~/tools/shell/shortcuts | grep "^alias w" | sort | bat --language=bash --style=plain --color=always
     echo ""
 
     echo "GitHub:"
