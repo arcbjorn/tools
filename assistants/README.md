@@ -31,6 +31,11 @@ assistants.
   https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/custom-commands.md
 - **OpenCode**: https://opencode.ai/docs/commands/
 
+### Sub-agents
+
+- **Claude**: https://docs.claude.com/en/docs/claude-code/sub-agents
+- **OpenCode**: https://opencode.ai/docs/agents/
+
 ## Directory Structure
 
 - `claude/` - Claude-specific configuration and agents
