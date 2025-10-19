@@ -13,3 +13,6 @@
 [submodule "sources/workflow"]
 	path = sources/workflow
 	url = https://github.com/arcbjorn/workflow.git
+[submodule "sources/assistants-sync"]
+	path = sources/assistants-sync
+	url = https://github.com/arcbjorn/assistants-sync.git
