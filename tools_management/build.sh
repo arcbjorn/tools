@@ -23,7 +23,20 @@ for dir in */; do
         find target/release -maxdepth 1 -type f -executable ! -name ".*" -exec cp {} "$TOOLS_DIR/bin/" \;
     elif [[ -f go.mod ]]; then
         echo "  Building Go project..."
-        go build -o "$TOOLS_DIR/bin/"
+        # Check if there's a cmd/ directory structure
+        if [[ -d "cmd" ]]; then
+            # Build each command in cmd/
+            for cmd_dir in cmd/*/; do
+                if [[ -d "$cmd_dir" ]]; then
+                    cmd_name=$(basename "$cmd_dir")
+                    echo "    Building $cmd_name..."
+                    go build -o "$TOOLS_DIR/bin/" "./$cmd_dir"
+                fi
+            done
+        else
+            # Standard Go build from root
+            go build -o "$TOOLS_DIR/bin/"
+        fi
     elif [[ -f build.zig ]]; then
         echo "  Building Zig project..."
         zig build --prefix "$TOOLS_DIR/"
