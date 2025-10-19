@@ -25,6 +25,9 @@ declare -A MENU_ITEMS=(
     ["create-tool"]="Create New Tool"
     ["sync-submodules"]="Sync Submodules"
     ["configure-shell"]="Configure Shell"
+    ["assistants-sync"]="Sync Assistants Config"
+    ["assistants-generate"]="Generate Assistants Config"
+    ["assistants-doctor"]="Check Assistants Config"
     ["view-tools"]="View All Tools"
 )
 
@@ -35,6 +38,9 @@ declare -A MENU_DESCRIPTIONS=(
     ["create-tool"]="Initialize new tool repository as submodule"
     ["sync-submodules"]="Update all submodules to latest versions"
     ["configure-shell"]="Setup shell to source tools configuration"
+    ["assistants-sync"]="Sync assistant configs to global directories"
+    ["assistants-generate"]="Generate assistant configs from source"
+    ["assistants-doctor"]="Check assistant configurations for issues"
     ["view-tools"]="List available scripts and executables"
 )
 
@@ -104,18 +110,42 @@ extract_key_from_choice() {
 # Execute script
 execute_script() {
     local key="$1"
-    local script="${MENU_SCRIPTS[$key]}"
-    local script_path="$TOOLS_MGMT_DIR/$script"
-    
-    [[ ! -f "$script_path" ]] && { log_error "Script not found: $script_path"; return 1; }
-    
-    if [[ ! -x "$script_path" ]]; then
-        log_warning "Script not executable, attempting to fix permissions..."
-        chmod +x "$script_path" || { log_error "Failed to make script executable"; return 1; }
-    fi
-    
-    log_info "Running $script..."
-    "$script_path"
+
+    case "$key" in
+        "assistants-sync"|"assistants-generate"|"assistants-doctor")
+            # Handle assistants-cli commands
+            if ! command -v assistants-cli &> /dev/null; then
+                log_error "assistants-cli not found in PATH"
+                echo "Please run: Build Tools to compile it"
+                return 1
+            fi
+
+            local cmd=""
+            case "$key" in
+                "assistants-sync") cmd="sync-global" ;;
+                "assistants-generate") cmd="gen all" ;;
+                "assistants-doctor") cmd="doctor" ;;
+            esac
+
+            log_info "Running assistants-cli $cmd..."
+            assistants-cli $cmd
+            ;;
+        *)
+            # Handle regular scripts
+            local script="${MENU_SCRIPTS[$key]}"
+            local script_path="$TOOLS_MGMT_DIR/$script"
+
+            [[ ! -f "$script_path" ]] && { log_error "Script not found: $script_path"; return 1; }
+
+            if [[ ! -x "$script_path" ]]; then
+                log_warning "Script not executable, attempting to fix permissions..."
+                chmod +x "$script_path" || { log_error "Failed to make script executable"; return 1; }
+            fi
+
+            log_info "Running $script..."
+            "$script_path"
+            ;;
+    esac
 }
 
 # List available tools
