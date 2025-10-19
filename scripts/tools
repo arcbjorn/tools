@@ -32,11 +32,11 @@ get_description() {
     
     case "$basename" in
         # Assistant configuration
-        configure-assistants-global) echo "Configure global assistant settings (Claude, Codex, Gemini)" ;;
+        configure-assistants-global) echo "Configure global assistant settings (Claude, Codex, Gemini, OpenCode)" ;;
         clean-global-assistants-configs) echo "Remove global assistant configuration files" ;;
         configure-cc-glm) echo "Configure Claude GLM integration" ;;
-        create-assistant-command) echo "Create new assistant command/prompt templates" ;;
-        sync-assistant-commands) echo "Sync assistant commands to global directories" ;;
+        create-assistant-command) echo "Create new assistant command/prompt/agent templates" ;;
+        sync-assistant-commands) echo "Sync assistant commands and agents to global directories" ;;
         save-current-claude-code-plugins) echo "Save current Claude Code plugins to repository" ;;
         
         # Repository management
