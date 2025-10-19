@@ -45,15 +45,21 @@ for dir in */; do
             echo "  Building Bun project..."
             # Determine entry point
             ENTRY=""
-            if [[ -f index.ts ]]; then
+            if [[ -f cli.ts ]]; then
+                ENTRY="cli.ts"
+            elif [[ -f index.ts ]]; then
                 ENTRY="index.ts"
             elif [[ -f src/index.ts ]]; then
                 ENTRY="src/index.ts"
             else
                 # Try to infer from package.json's module/main fields
                 if [[ -f package.json ]]; then
-                    if grep -q '"module"\s*:\s*"index.ts"' package.json; then
+                    if grep -q '"module"\s*:\s*"cli.ts"' package.json; then
+                        ENTRY="cli.ts"
+                    elif grep -q '"module"\s*:\s*"index.ts"' package.json; then
                         ENTRY="index.ts"
+                    elif grep -q '"main"\s*:\s*"cli.ts"' package.json; then
+                        ENTRY="cli.ts"
                     elif grep -q '"main"\s*:\s*"index.ts"' package.json; then
                         ENTRY="index.ts"
                     fi
@@ -64,7 +70,7 @@ for dir in */; do
                 OUT_PATH="$TOOLS_DIR/bin/$OUT_NAME"
                 bun build --compile "$ENTRY" --outfile "$OUT_PATH"
             else
-                echo "  Could not determine Bun entrypoint (index.ts or src/index.ts). Skipping..."
+                echo "  Could not determine Bun entrypoint (cli.ts, index.ts or src/index.ts). Skipping..."
             fi
         else
             echo "  Bun is not installed; skipping Bun build."
