@@ -158,26 +158,18 @@ fi
 echo ""
 echo "Configuring global assistant settings..."
 
-# Directories should already exist - just verify
-if [ ! -d "$CLAUDE_CONFIG_DIR" ]; then
-    echo "Error: $CLAUDE_CONFIG_DIR directory not found. Please ensure claude is properly installed."
-    exit 1
-fi
+# Create config directories if they don't exist
+echo "Creating config directories..."
+mkdir -p "$CLAUDE_CONFIG_DIR"
+mkdir -p "$CODEX_CONFIG_DIR"
+mkdir -p "$GEMINI_CONFIG_DIR"
+mkdir -p "$OPENCODE_CONFIG_DIR"
 
-if [ ! -d "$CODEX_CONFIG_DIR" ]; then
-    echo "Error: $CODEX_CONFIG_DIR directory not found. Please ensure codex is properly installed."
-    exit 1
-fi
-
-if [ ! -d "$GEMINI_CONFIG_DIR" ]; then
-    echo "Error: $GEMINI_CONFIG_DIR directory not found. Please ensure gemini is properly installed."
-    exit 1
-fi
-
-if [ ! -d "$OPENCODE_CONFIG_DIR" ]; then
-    echo "Error: $OPENCODE_CONFIG_DIR directory not found. Please ensure opencode is properly installed."
-    exit 1
-fi
+echo "✓ Created config directories:"
+echo "  - $CLAUDE_CONFIG_DIR"
+echo "  - $CODEX_CONFIG_DIR"
+echo "  - $GEMINI_CONFIG_DIR"
+echo "  - $OPENCODE_CONFIG_DIR"
 
 # Create/update global CLAUDE.md
 CLAUDE_MD_PATH="$HOME/.claude/CLAUDE.md"
@@ -345,6 +337,8 @@ fi
 
 # Create or update OpenCode config file (JSON/JSONC format)
 OPENCODE_CONFIG_FILE="$HOME/.config/opencode/opencode.json"
+# Create OpenCode config directory if it doesn't exist
+mkdir -p "$(dirname "$OPENCODE_CONFIG_FILE")"
 if [ -f "$ASSISTANTS_DIR/opencode/config.json" ] && [ -s "$ASSISTANTS_DIR/opencode/config.json" ]; then
     if command -v jq >/dev/null 2>&1; then
         # Use jq for proper JSON merging
