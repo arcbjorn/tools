@@ -28,6 +28,7 @@ declare -A MENU_ITEMS=(
     ["assistants-sync"]="Sync Assistants Config"
     ["assistants-generate"]="Generate Assistants Config"
     ["assistants-doctor"]="Check Assistants Config"
+    ["assistants-import"]="Import Assistants from Claude"
     ["view-tools"]="View All Tools"
 )
 
@@ -41,6 +42,7 @@ declare -A MENU_DESCRIPTIONS=(
     ["assistants-sync"]="Sync assistant configs to global directories"
     ["assistants-generate"]="Generate assistant configs from source"
     ["assistants-doctor"]="Check assistant configurations for issues"
+    ["assistants-import"]="Import Claude commands/agents to source directory"
     ["view-tools"]="List available scripts and executables"
 )
 
@@ -112,7 +114,7 @@ execute_script() {
     local key="$1"
 
     case "$key" in
-        "assistants-sync"|"assistants-generate"|"assistants-doctor")
+        "assistants-sync"|"assistants-generate"|"assistants-doctor"|"assistants-import")
             # Handle assistants-cli commands
             if ! command -v assistants-cli &> /dev/null; then
                 log_error "assistants-cli not found in PATH"
@@ -125,6 +127,7 @@ execute_script() {
                 "assistants-sync") cmd="sync-global" ;;
                 "assistants-generate") cmd="gen all" ;;
                 "assistants-doctor") cmd="doctor" ;;
+                "assistants-import") cmd="sync-from-global" ;;
             esac
 
             log_info "Running assistants-cli $cmd..."
