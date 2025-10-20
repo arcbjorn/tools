@@ -467,6 +467,7 @@ main() {
                         echo "1) sync-global - Sync assistant configs to global directories"
                         echo "2) gen all - Generate all assistant configs"
                         echo "3) doctor - Check assistant configurations"
+                        echo "4) sync-from-global - Import Claude commands/agents to source"
                         echo -ne "${YELLOW}Enter choice: ${NC}"
                         read -n 1 -s cli_choice
                         echo
@@ -474,6 +475,7 @@ main() {
                             1) execute_tool "assistants-cli sync-global" ;;
                             2) execute_tool "assistants-cli gen all" ;;
                             3) execute_tool "assistants-cli doctor" ;;
+                            4) execute_tool "assistants-cli sync-from-global" ;;
                             *) echo -e "${RED}Invalid choice${NC}"; sleep 1 ;;
                         esac
                         ;;
