@@ -70,6 +70,8 @@ CLAUDE_COMMANDS_DIR="$HOME/.claude/commands"
 CODEX_PROMPTS_DIR="$HOME/.codex/prompts"
 GEMINI_COMMANDS_DIR="$HOME/.gemini/commands"
 OPENCODE_COMMANDS_DIR="$HOME/.config/opencode/command"
+CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
+OPENCODE_AGENTS_DIR="$HOME/.config/opencode/agent"
 
 # Check which files and directories exist
 FILES_TO_REMOVE=()
@@ -98,6 +100,12 @@ fi
 if [ -d "$OPENCODE_COMMANDS_DIR" ]; then
     DIRS_TO_REMOVE+=("$OPENCODE_COMMANDS_DIR")
 fi
+if [ -d "$CLAUDE_AGENTS_DIR" ]; then
+    DIRS_TO_REMOVE+=("$CLAUDE_AGENTS_DIR")
+fi
+if [ -d "$OPENCODE_AGENTS_DIR" ]; then
+    DIRS_TO_REMOVE+=("$OPENCODE_AGENTS_DIR")
+fi
 
 if [ ${#FILES_TO_REMOVE[@]} -eq 0 ] && [ ${#DIRS_TO_REMOVE[@]} -eq 0 ]; then
     echo "No assistant configuration files or directories found to remove."
@@ -112,7 +120,7 @@ if [ ${#FILES_TO_REMOVE[@]} -gt 0 ]; then
 fi
 
 if [ ${#DIRS_TO_REMOVE[@]} -gt 0 ]; then
-    echo "Found the following command directories:"
+    echo "Found the following command/agent directories:"
     for dir in "${DIRS_TO_REMOVE[@]}"; do
         echo "  - $dir"
     done
