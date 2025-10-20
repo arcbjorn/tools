@@ -22,7 +22,7 @@ while [[ $# -gt 0 ]]; do
             echo "  - ~/.claude/CLAUDE.md"
             echo "  - ~/.codex/AGENTS.md"
             echo "  - ~/.gemini/GEMINI.md"
-            echo "  - ~/.config/opencode/OPENCODE.md"
+            echo "  - ~/.config/opencode/global_instructions.md"
             echo "  - ~/.claude/commands/"
             echo "  - ~/.claude/agents/"
             echo "  - ~/.codex/prompts/"
@@ -65,13 +65,15 @@ echo "===================================="
 CLAUDE_MD_PATH="$HOME/.claude/CLAUDE.md"
 CODEX_MD_PATH="$HOME/.codex/AGENTS.md"
 GEMINI_MD_PATH="$HOME/.gemini/GEMINI.md"
-OPENCODE_MD_PATH="$HOME/.config/opencode/OPENCODE.md"
+OPENCODE_MD_PATH="$HOME/.config/opencode/global_instructions.md"
 CLAUDE_COMMANDS_DIR="$HOME/.claude/commands"
 CODEX_PROMPTS_DIR="$HOME/.codex/prompts"
 GEMINI_COMMANDS_DIR="$HOME/.gemini/commands"
 OPENCODE_COMMANDS_DIR="$HOME/.config/opencode/command"
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
 OPENCODE_AGENTS_DIR="$HOME/.config/opencode/agent"
+CODEX_AGENTS_DIR="$HOME/.codex/agents"
+GEMINI_AGENTS_DIR="$HOME/.gemini/agents"
 
 # Check which files and directories exist
 FILES_TO_REMOVE=()
@@ -105,6 +107,12 @@ if [ -d "$CLAUDE_AGENTS_DIR" ]; then
 fi
 if [ -d "$OPENCODE_AGENTS_DIR" ]; then
     DIRS_TO_REMOVE+=("$OPENCODE_AGENTS_DIR")
+fi
+if [ -d "$CODEX_AGENTS_DIR" ]; then
+    DIRS_TO_REMOVE+=("$CODEX_AGENTS_DIR")
+fi
+if [ -d "$GEMINI_AGENTS_DIR" ]; then
+    DIRS_TO_REMOVE+=("$GEMINI_AGENTS_DIR")
 fi
 
 if [ ${#FILES_TO_REMOVE[@]} -eq 0 ] && [ ${#DIRS_TO_REMOVE[@]} -eq 0 ]; then
