@@ -1,0 +1,43 @@
+---
+description: "Analyzes TypeScript code to extract hardcoded strings into a constants file with proper typing."
+---
+## Refactoring Commands
+
+### `/ref-consts-ts` - Refactor TypeScript strings to constants
+Analyzes TypeScript code to extract hardcoded strings into a constants file with proper typing.
+
+**Priority:**
+1. **Enums first** - Groups related string values into TypeScript enums
+2. **Constants second** - Individual string constants for standalone values
+
+**Process:**
+- Scans for hardcoded string literals in the codebase
+- Groups related strings (e.g., status values, error messages, API endpoints)
+- Creates enums for grouped values with meaningful names
+- Creates individual constants for standalone strings
+- Generates a `constants.ts` file with proper TypeScript types
+- Updates original files to import and use the constants/enums
+- Maintains string literal types where beneficial for type safety
+
+**Output structure:**
+```typescript
+// constants.ts
+export enum ApiEndpoints {
+  USERS = '/api/users',
+  ORDERS = '/api/orders',
+  PRODUCTS = '/api/products'
+}
+
+export enum UserRoles {
+  ADMIN = 'admin',
+  USER = 'user', 
+  GUEST = 'guest'
+}
+
+export const ERROR_MESSAGES = {
+  NETWORK_ERROR: 'Network connection failed',
+  UNAUTHORIZED: 'Access denied'
+} as const;
+```
+
+$ARGUMENTS
