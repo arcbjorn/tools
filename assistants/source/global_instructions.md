@@ -15,7 +15,7 @@ Variables: `$VAR` (single node), `$$$` (zero+ nodes), `$$VAR` (multiple nodes)
 
 ## Package Manager Commands for Dependencies
 **ALWAYS use these commands to add dependencies (gets latest versions):**
-- **Node/JS/TS**: `pnpm add <package>` (NEVER use npm)
+- **Node/JS/TS**: `pnpm add <package>` or `bun add <package>` (NEVER use npm)
 - **Python**: `uv add <package>` (NEVER use pip or poetry directly)
 - **Go**: `go get -u <module>` or `go get <module>@latest`
 - **Rust**: `cargo add <crate>` (auto-fetches latest)
@@ -25,10 +25,9 @@ Variables: `$VAR` (single node), `$$$` (zero+ nodes), `$$VAR` (multiple nodes)
 - **Java**: Add to `pom.xml` or `build.gradle` with version `LATEST` or `+`
 - **Elixir**: `mix deps.get` after adding to `mix.exs`
 - **Zig**: Add to `build.zig.zon` then `zig build`
-- **Bun**: `bun add <package>` for Bun projects
 
 **Dev Dependencies:**
-- **Node**: `pnpm add -D <package>`
+- **Node**: `pnpm add -D <package>` or `bun add -D <package>`
 - **Python**: `uv add --dev <package>`
 - **Rust**: `cargo add --dev <crate>`
 - **Go**: Add with `// indirect` comment in go.mod
@@ -41,17 +40,13 @@ Variables: `$VAR` (single node), `$$$` (zero+ nodes), `$$VAR` (multiple nodes)
 
 ## Always Use Standard CLI Tools
 **Use official tools for ALL tasks, not just initialization:**
-- **Go**: `go mod init`, `go get` for dependencies
+- **Go**: `go mod init`
 - **React**: `pnpm create vite@latest app -- --template react`
 - **Alpine.js**: `pnpm create vite@latest app -- --template vanilla-ts`
 - **Svelte**: `npx sv create app`
-- **Rust**: `cargo new`, `cargo add`, `cargo check`, `cargo test`
+- **Rust**: `cargo new`, `cargo check`, `cargo test`
 - **Zig**: `zig init`, `zig build`, `zig test`
-- **Ruby**: `bundle init`, `bundle add`, `rails new`, `rails generate`
-- **Elixir**: `mix new`, `mix phx.new` (Phoenix), `mix deps.get`
-- **Python**: `uv init`, `uv add` for dependencies (NEVER pip or poetry)
-- ALWAYS use `pnpm` instead of `npm`
-- ALWAYS use `uv` instead of `pip` or `poetry`
-- ALWAYS use TypeScript instead of JavaScript
+- **Ruby**: `bundle init`, `rails new`, `rails generate`
+- **Elixir**: `mix new`, `mix phx.new` (Phoenix)
 - **Never manually create package.json/go.mod/pyproject.toml** - use official scaffolding
 - **Always use language-specific package managers and build tools**
