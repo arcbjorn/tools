@@ -27,3 +27,11 @@ Variables: `$VAR` (single node), `$$$` (zero+ nodes), `$$VAR` (multiple nodes)
 - ALWAYS use TypeScript instead of JavaScript
 - **Never manually create package.json/go.mod** - use official scaffolding
 - **Always use language-specific package managers and build tools**
+
+## mcp codex
+```bash
+mcp__codex__codex --prompt "Review all Python services and provide refactoring instructions"
+mcp__codex__codex --prompt "Analyze this codebase for security vulnerabilities and bugs"
+mcp__codex__codex --prompt "Review FastAPI architecture and suggest improvements"
+```
+Use for: comprehensive code reviews, refactoring guidance, architecture analysis
