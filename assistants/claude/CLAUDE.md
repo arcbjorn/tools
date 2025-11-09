@@ -1,11 +1,19 @@
 <!-- GLOBAL INSTRUCTIONS START -->
+NEVER use emojis in communication, code, or commits unless explicitly requested
+
 COMMIT: conventional commits, 1 granular commit per goal, 50 char max
 
 ## Tools
-- **ast-grep**: code searches (functions, classes, patterns, refactoring)
-- **grep**: text searches (docs, comments, logs, non-code)
-- **pnpm**: always use instead of npm
-- **TypeScript**: always use instead of JavaScript
+- **ast-grep**: structural code searches (functions, classes, patterns) and refactoring
+- **grep/rg**: text searches (docs, comments, logs, non-code content)
+- **git**: version control (use conventional commits, atomic commits per goal)
+- **strace/ltrace**: system call tracing and debugging
+- **docker/podman**: containerization (prefer podman for rootless)
+- **make/cmake**: build automation (always check for existing Makefiles)
+- **jq/yq**: JSON/YAML parsing and manipulation
+- **curl/httpie**: HTTP requests (prefer httpie for readability)
+- **fd**: fast file finder (modern alternative to find)
+- **bat**: syntax-highlighted file viewer (modern alternative to cat)
 
 ## ast-grep
 ```bash
@@ -39,7 +47,7 @@ Variables: `$VAR` (single node), `$$$` (zero+ nodes), `$$VAR` (multiple nodes)
 - `uv pip install` only when absolutely necessary
 - `uv run` to run scripts with dependencies
 
-## Always Use Standard CLI Tools
+## Project Initialization & Standard CLI Tools
 **Use official tools for ALL tasks, not just initialization:**
 - **Go**: `go mod init`
 - **React**: `pnpm create vite@latest app -- --template react`
@@ -49,7 +57,12 @@ Variables: `$VAR` (single node), `$$$` (zero+ nodes), `$$VAR` (multiple nodes)
 - **Zig**: `zig init`, `zig build`, `zig test`
 - **Ruby**: `bundle init`, `rails new`, `rails generate`
 - **Elixir**: `mix new`, `mix phx.new` (Phoenix)
-- **Never manually create package.json/go.mod/pyproject.toml** - use official scaffolding
+
+## Language Preferences
+- **JavaScript/TypeScript**: ALWAYS use TypeScript instead of JavaScript
+- **Node package managers**: ALWAYS use `pnpm` or `bun` (NEVER use npm)
+- **Python package managers**: ALWAYS use `uv` (NEVER use pip or poetry directly)
+- **Never manually create package.json/go.mod/pyproject.toml** - use official scaffolding tools
 - **Always use language-specific package managers and build tools**
 <!-- GLOBAL INSTRUCTIONS END -->
 
