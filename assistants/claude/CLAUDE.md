@@ -73,3 +73,21 @@ mcp__codex__codex --prompt "Analyze this codebase for security vulnerabilities a
 mcp__codex__codex --prompt "Review FastAPI architecture and suggest improvements"
 ```
 Use for: comprehensive code reviews, refactoring guidance, architecture analysis
+
+## glm (direct usage)
+GLM-4.6 via api.z.ai - use directly to save context on specific tasks
+
+**Interactive mode:**
+```bash
+glm                          # Start interactive session
+glm "Review this codebase"   # Start with initial prompt
+```
+
+**Non-interactive mode (print and exit):**
+```bash
+glm -p "Refactor src/auth.py to add type hints"
+glm --print "Optimize database queries in services/user.py"
+glm -p "Implement error handling" < api/handlers.go
+```
+
+Use GLM when you need to delegate tasks without consuming main context. Provide PRECISE instructions with specific files and expected changes.
