@@ -23,8 +23,9 @@ if grep -q "^glm()" "$SHELL_TEMP"; then
         echo "Aborted."
         exit 0
     fi
-    # Remove existing function
+    # Remove existing function and export
     sed -i '/^glm()/,/^}/d' "$SHELL_TEMP"
+    sed -i '/^export -f glm$/d' "$SHELL_TEMP"
 fi
 
 # Add the function to shell/temp
@@ -34,6 +35,7 @@ cat >> "$SHELL_TEMP" << EOF
 glm() {
     ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic ANTHROPIC_AUTH_TOKEN=$auth_token ANTHROPIC_MODEL="glm-4.6" claude "\$@"
 }
+export -f glm
 EOF
 
 echo "✓ Added glm() function to shell/temp configuration"
