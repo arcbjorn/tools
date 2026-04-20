@@ -11,7 +11,7 @@ WHITE='\033[38;5;7m'
 GRAY='\033[38;5;8m'
 NC='\033[0m'
 
-TOOLS_DIR="/home/arc/tools"
+TOOLS_DIR="$HOME/tools"
 ASSISTANTS_DIR="$TOOLS_DIR/assistants"
 
 show_help() {
