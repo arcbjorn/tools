@@ -72,14 +72,26 @@ The build system in `tools_management/build.sh` automatically detects project ty
 - Provides modular configuration loading for shortcuts, temp secrets, and functions
 
 ## AI Assistant Configuration Architecture
-The `assistants/` system provides centralized configuration management:
-- **`common/`**: Shared instructions and commands synced to all assistants
-- **`claude/`, `codex/`, `gemini/`**: Assistant-specific configurations
-- **Configuration merging**: Preserves existing settings while adding new ones
-- **Command formats**:
-  - Claude/Gemini: `.md` files in `commands/` (uses `$ARGUMENTS` placeholder)
-  - Codex: `.md/.toml` files in `prompts/` (entire file becomes prompt)
-  - Common: `.md` files automatically synced to all assistants
+The `assistants/` system uses `bin/assistants-cli` to manage configurations.
+
+**Source of truth for shared content**: `assistants/source/`
+- `global_instructions.md`: merged into every assistant config inside `<!-- GLOBAL INSTRUCTIONS START/END -->` block
+- `commands/`: commands synced to all assistants
+- `agents/`: agents synced to all assistants
+
+**Per-assistant files** (`claude/CLAUDE.md`, `codex/AGENTS.md`, `gemini/GEMINI.md`, `opencode/global_instructions.md`): hand-edited for assistant-specific content — `gen` only updates the global instructions block, leaving the rest intact.
+
+**Workflow**:
+```bash
+bin/assistants-cli gen all        # sync global instructions + commands/agents from source
+bin/assistants-cli gen claude     # same, claude only
+bin/assistants-cli sync-global    # push assistants/ to ~/.claude/, ~/.gemini/, ~/.config/opencode/, ~/.codex/
+bin/assistants-cli doctor         # check config health
+```
+
+**Command formats**:
+- Claude/Gemini/OpenCode: `.md` files in `commands/`
+- Codex: `.md/.toml` files in `prompts/`
 
 # Development Guidelines
 
