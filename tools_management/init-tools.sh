@@ -21,7 +21,7 @@ if [ ! -f "$TOOLS_DIR/shell/temp" ]; then
 # 
 # Example:
 # glm() {
-#     ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic ANTHROPIC_AUTH_TOKEN=your_token claude "$@"
+#     ANTHROPIC_AUTH_TOKEN=your_zai_api_key ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic ANTHROPIC_MODEL="glm-5.1" API_TIMEOUT_MS=3000000 claude "$@"
 # }
 EOF
 fi
