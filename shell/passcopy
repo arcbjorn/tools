@@ -23,4 +23,6 @@ _passcopy_complete() {
     return
   fi
 }
-complete -F _passcopy_complete passcopy
+if command -v complete >/dev/null 2>&1; then
+  complete -F _passcopy_complete passcopy
+fi
