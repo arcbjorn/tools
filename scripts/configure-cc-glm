@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Script to configure Claude GLM function in shell/rc
+# Script to configure Claude GLM function in shell/temp
 
 echo "This script will add a 'glm' function to your shell configuration that uses api.z.ai"
 echo
 
 # Ask for auth token
-read -s -p "Enter your ANTHROPIC_AUTH_TOKEN: " auth_token
+read -s -p "Enter your Z.ai API key: " auth_token
 echo
 
 if [ -z "$auth_token" ]; then
@@ -14,8 +14,11 @@ if [ -z "$auth_token" ]; then
     exit 1
 fi
 
-# Check if function already exists
 SHELL_TEMP="$HOME/tools/shell/temp"
+mkdir -p "$(dirname "$SHELL_TEMP")"
+touch "$SHELL_TEMP"
+
+# Check if function already exists
 if grep -q "^glm()" "$SHELL_TEMP"; then
     echo "glm() function already exists in shell configuration"
     read -p "Do you want to replace it? (y/N): " replace
@@ -24,8 +27,7 @@ if grep -q "^glm()" "$SHELL_TEMP"; then
         exit 0
     fi
     # Remove existing function and export
-    sed -i '/^glm()/,/^}/d' "$SHELL_TEMP"
-    sed -i '/^export -f glm$/d' "$SHELL_TEMP"
+    perl -0pi -e 's/\n?# Claude GLM function\n?glm\(\) \{.*?\n\}\n(?:if \[ -n "\\\$\{BASH_VERSION:-\}" \]; then\n    export -f glm\nfi|export -f glm)\n?/\n/s' "$SHELL_TEMP"
 fi
 
 # Add the function to shell/temp
@@ -33,12 +35,14 @@ cat >> "$SHELL_TEMP" << EOF
 
 # Claude GLM function
 glm() {
-    ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic ANTHROPIC_AUTH_TOKEN=$auth_token ANTHROPIC_MODEL="glm-4.6" claude "\$@"
+    ANTHROPIC_AUTH_TOKEN=$auth_token ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic ANTHROPIC_MODEL="glm-5.1" API_TIMEOUT_MS=3000000 claude "\$@"
 }
-export -f glm
+if [ -n "\${BASH_VERSION:-}" ]; then
+    export -f glm
+fi
 EOF
 
-echo "✓ Added glm() function to shell/temp configuration"
+echo "Added glm() function to shell/temp configuration"
 echo "Run 'source ~/.bashrc' or start a new terminal to use it"
 echo
 echo "Usage: glm [claude arguments]"
