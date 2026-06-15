@@ -30,8 +30,26 @@ alias ccc='claude --continue'
 alias glmc='glm --continue'
 
 # SSH/Network shortcuts
-alias base='tailscale ssh admin@base'
-alias nova='tailscale ssh admin@nova'
+# Resolve a tailnet host by name to its IP via `tailscale status`, then SSH to the
+# IP directly. This works even when MagicDNS is down: it bypasses name resolution
+# entirely (both the system resolver and `tailscale ssh`'s reverse-name lookup,
+# both of which fail when MagicDNS isn't applied to the device).
+_ts_ssh() {
+    local host="$1"; shift
+    if ! command -v tailscale >/dev/null 2>&1; then
+        echo "tailscale not found in PATH" >&2
+        return 1
+    fi
+    local ip
+    ip="$(tailscale status 2>/dev/null | awk -v h="$host" '$2 == h {print $1; exit}')"
+    if [ -z "$ip" ]; then
+        echo "could not resolve tailnet host '$host' (is it in 'tailscale status'?)" >&2
+        return 1
+    fi
+    ssh "admin@$ip" "$@"
+}
+alias base='_ts_ssh base'
+alias nova='_ts_ssh nova'
 alias status='tailscale status'
 
 # Tools shortcuts
