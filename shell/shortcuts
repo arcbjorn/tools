@@ -34,14 +34,22 @@ alias glmc='glm --continue'
 # IP directly. This works even when MagicDNS is down: it bypasses name resolution
 # entirely (both the system resolver and `tailscale ssh`'s reverse-name lookup,
 # both of which fail when MagicDNS isn't applied to the device).
-_ts_ssh() {
-    local host="$1"; shift
-    if ! command -v tailscale >/dev/null 2>&1; then
-        echo "tailscale not found in PATH" >&2
+# Portable across Linux (tailscale in PATH) and macOS (PATH or the GUI app bundle).
+_ts_bin() {
+    if command -v tailscale >/dev/null 2>&1; then
+        echo tailscale
+    elif [ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]; then
+        echo /Applications/Tailscale.app/Contents/MacOS/Tailscale
+    else
         return 1
     fi
+}
+_ts_ssh() {
+    local host="$1"; shift
+    local ts
+    ts="$(_ts_bin)" || { echo "tailscale not found in PATH or /Applications" >&2; return 1; }
     local ip
-    ip="$(tailscale status 2>/dev/null | awk -v h="$host" '$2 == h {print $1; exit}')"
+    ip="$("$ts" status 2>/dev/null | awk -v h="$host" '$2 == h {print $1; exit}')"
     if [ -z "$ip" ]; then
         echo "could not resolve tailnet host '$host' (is it in 'tailscale status'?)" >&2
         return 1
