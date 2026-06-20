@@ -1,15 +1,39 @@
 #!/bin/bash
 
-# passcopy - Copy specific fields from pass entries to clipboard
+# passcopy - Copy a named field from a multi-line pass entry to the clipboard.
+#
+# Unlike `pass -c` (which only copies line 1, the password) this extracts any
+# `field: value` line and copies just the value (prefix stripped). The special
+# field `password` copies line 1, so passcopy is a strict superset of `pass -c`.
+#
+#   passcopy github password   # line 1
+#   passcopy github email      # value of the "email:" line
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: passcopy <entry> <field>"
-    echo "Fields: login username email user account website street city country ip phone address notes url port host server api key token id password pin code ssn license iban swift bic name firstname lastname company otp totp secret card cvv passport"
+    echo "  <field> is 'password' (line 1) or any 'field:' label in the entry"
+    echo "  e.g. login username email url token otp recovery ..."
     exit 1
 fi
 
 entry="$1"
 field="$2"
+
+# Pick a clipboard backend for this platform.
+CLIP_CLEAR=""   # command to clear the clipboard (empty = clear by copying nothing)
+if command -v pbcopy >/dev/null 2>&1; then
+    clip() { pbcopy; }                       # macOS
+elif command -v wl-copy >/dev/null 2>&1; then
+    clip() { wl-copy; }                      # Wayland
+    CLIP_CLEAR="wl-copy --clear"
+elif command -v xclip >/dev/null 2>&1; then
+    clip() { xclip -selection clipboard; }   # X11
+elif command -v xsel >/dev/null 2>&1; then
+    clip() { xsel --clipboard --input; }     # X11
+else
+    echo "Error: no clipboard tool found (need pbcopy, wl-copy, xclip, or xsel)"
+    exit 1
+fi
 
 # Get the pass entry content
 pass_content=$(pass show "$entry" 2>/dev/null)
@@ -18,29 +42,25 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-# Extract the field value
-case "$field" in
-    "login"|"username"|"email"|"user"|"account"|"website"|"street"|"city"|"country")
-        value=$(echo "$pass_content" | grep -i "^$field:" | cut -d':' -f2- | sed 's/^ *//')
-        ;;
-    *)
-        echo "Error: Unknown field '$field'"
-        echo "Valid fields: login username email user account website street city country"
-        exit 1
-        ;;
-esac
+# Extract the field value. `password` is the first line (pass convention);
+# any other field is matched by its "field:" prefix, value only.
+if [[ "$field" == "password" ]]; then
+    value=$(printf '%s\n' "$pass_content" | head -n1)
+else
+    value=$(printf '%s\n' "$pass_content" | grep -i "^$field:" | head -n1 | cut -d':' -f2- | sed 's/^ *//')
+fi
 
 if [[ -z "$value" ]]; then
     echo "Error: Field '$field' not found in entry '$entry'"
     exit 1
 fi
 
-# Kill any existing passcopy clear timers
-pkill -f "sleep 45.*wl-copy --clear" 2>/dev/null
-
-# Copy to clipboard
-echo -n "$value" | wl-copy
+# Copy to clipboard, then clear after 45s in the background.
+printf '%s' "$value" | clip
 echo "Copied $field for $entry to clipboard (will clear in 45 seconds)"
 
-# Clear clipboard after 45 seconds in background
-(sleep 45 && wl-copy --clear) &
+if [[ -n "$CLIP_CLEAR" ]]; then
+    (sleep 45 && $CLIP_CLEAR) &
+else
+    (sleep 45 && printf '' | clip) &
+fi

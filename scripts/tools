@@ -62,9 +62,9 @@ describe() {
         assistants-cli)        echo "Generate/sync/check AI assistant configs" ;;
         attach-existing-repo)  echo "Attach an existing project dir to a new remote repo" ;;
         init-new-repo)         echo "Create a new repo with full configuration" ;;
-        git-status-overview)   echo "System-wide git status overview" ;;
+        git-status-overview)   echo "Git status overview for ~/tools and ~/projects" ;;
         configure-cc-glm)      echo "Add 'glm' shell function (api.z.ai)" ;;
-        passcopy)              echo "Copy a password from pass to clipboard" ;;
+        passcopy)              echo "Copy a field from a pass entry to the clipboard" ;;
         workflow)              echo "Workflow tool" ;;
         gh-activity-graph-sh)  echo "Render a GitHub activity graph" ;;
         tools)                 echo "" ;;  # hide self

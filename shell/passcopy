@@ -18,8 +18,18 @@ _passcopy_complete() {
   fi
 
   if (( COMP_CWORD == 2 )); then
-    # Complete fields second
-    COMPREPLY=( $(compgen -W 'login username email user account website street city country ip phone address notes url port host server api key token id password pin code ssn license iban swift bic name firstname lastname company otp totp secret card cvv passport' -- "$cur") )
+    # Complete fields second. `password` is line 1; the rest are the actual
+    # "field:" labels found in the selected entry (so suggestions are real).
+    local entry="${COMP_WORDS[1]}"
+    local fields="password"
+    local content
+    content="$(pass show "$entry" 2>/dev/null)"
+    if [[ -n "$content" ]]; then
+      local labels
+      labels="$(printf '%s\n' "$content" | grep -oiE '^[a-z0-9_-]+:' | sed 's/:$//' | tr '\n' ' ')"
+      fields="password $labels"
+    fi
+    COMPREPLY=( $(compgen -W "$fields" -- "$cur") )
     return
   fi
 }
