@@ -65,7 +65,6 @@ describe() {
         git-status-overview)   echo "System-wide git status overview" ;;
         configure-cc-glm)      echo "Add 'glm' shell function (api.z.ai)" ;;
         passcopy)              echo "Copy a password from pass to clipboard" ;;
-        save-current-claude-plugins) echo "Copy current Claude commands/agents into repo" ;;
         workflow)              echo "Workflow tool" ;;
         gh-activity-graph-sh)  echo "Render a GitHub activity graph" ;;
         tools)                 echo "" ;;  # hide self
