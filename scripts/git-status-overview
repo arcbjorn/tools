@@ -4,8 +4,20 @@
 readonly TEMP_DATA="/tmp/git_data_$$"
 readonly TEMP_SORTED="/tmp/git_sorted_$$"
 
-# Excluded directories pattern
-readonly EXCLUDE_PATTERN='/(node_modules|build|dist|target|\.next|\.nuxt|vendor|bower_components|\.gradle|\.m2|\.local|\.cache|\.cargo)/'
+# Directories to scan for repos. Override by passing paths as arguments:
+#   git-status-overview ~/work ~/scratch
+# Defaults to the two dirs that actually hold repos, so it stays fast.
+if [[ $# -gt 0 ]]; then
+    SCAN_ROOTS=("$@")
+else
+    SCAN_ROOTS=("$HOME/tools" "$HOME/projects")
+fi
+
+# Directory names pruned during traversal (never descended into).
+readonly PRUNE_NAMES='node_modules|build|dist|target|.next|.nuxt|vendor|bower_components|.gradle|.m2|.local|.cache|.cargo'
+
+# Don't recurse past this depth below a scan root (keeps stray deep .git out).
+readonly MAX_DEPTH=4
 
 # Initialize temp file
 > "$TEMP_DATA"
@@ -53,15 +65,28 @@ get_repo_status() {
     printf "%s|%d|%d|%d|%d|%s\n" "$repo_dir" "$untracked_count" "$unstaged_count" "$staged_count" "$unpushed_count" "$upstream_status" >> "$TEMP_DATA"
 }
 
-# Scan all git repositories
+# Scan the configured roots for git repositories.
 scan_repositories() {
-    find / -name ".git" -type d 2>/dev/null | \
-    grep -v -E "$EXCLUDE_PATTERN" | \
-    while read -r git_dir; do
+    # Prune list = .git plus the heavy dirs. find descends into none of them;
+    # pruning .git avoids walking each repo's internals (the real speedup).
+    local -a prune=(-name .git)
+    local name
+    while IFS= read -r name; do
+        [[ -n "$name" ]] || continue
+        prune+=(-o -name "$name")
+    done < <(tr '|' '\n' <<< "$PRUNE_NAMES")
+
+    local root
+    for root in "${SCAN_ROOTS[@]}"; do
+        [[ -d "$root" ]] || { echo "skip (not a dir): $root" >&2; continue; }
+        # Print a pruned .git dir, or a .git file (submodule gitdir pointer).
+        find "$root" -maxdepth "$MAX_DEPTH" \
+            \( -type d \( "${prune[@]}" \) -prune \) \
+            \( -name .git -print \) -o \
+            \( -type f -name .git -print \) 2>/dev/null
+    done | while read -r git_dir; do
         local repo_dir
         repo_dir=$(dirname "$git_dir")
-        
-        # Skip if we can't access the directory
         [[ -r "$repo_dir" ]] && get_repo_status "$repo_dir"
     done
 }
