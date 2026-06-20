@@ -12,7 +12,13 @@ cd "$TOOLS_DIR/sources"
 
 for dir in */; do
     [ -d "$dir" ] || continue
-    
+
+    # assistants-cli runs via `bun run` (see scripts/tools); don't compile it.
+    if [[ "$dir" == "assistants-cli/" ]]; then
+        echo "Skipping assistants-cli (run via 'tools assist', not compiled)"
+        continue
+    fi
+
     echo "Processing $dir..."
     cd "$dir"
     
