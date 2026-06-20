@@ -41,7 +41,6 @@ This system follows a three-layer architecture:
 │   ├── rc                     # Main shell config (PATH + modular loading)
 │   ├── shortcuts              # Custom aliases and shortcuts
 │   └── temp                   # Temporary commands (git-ignored)
-├── manage.sh               # Interactive management interface
 ├── CLAUDE.md               # Project-specific development guidelines
 └── .gitmodules             # Git submodule configuration
 ```
@@ -49,10 +48,10 @@ This system follows a three-layer architecture:
 ## Installation
 
 ### Quick Start (Recommended)
-Run the complete setup script (only needed once):
+Run the complete setup once (call it directly the first time, before `tools` is on PATH):
 ```bash
 cd ~/tools
-./tools_management/init-tools.sh
+./scripts/tools init
 ```
 
 This will:
@@ -61,49 +60,40 @@ This will:
 - Set executable permissions for all scripts and binaries
 - Initialize the modular shell configuration system
 
-### Manual Setup
-If you prefer manual setup:
-```bash
-cd ~/tools
-./tools_management/build.sh              # Build all tools
-./tools_management/configure-shell.sh    # Configure shell integration
-./tools_management/set-permissions.sh    # Fix executable permissions
-```
+After PATH is set up (new shell), drive everything with the single `tools` command.
 
 ## Usage
 
-### Interactive Management Interfaces
+Everything goes through one command:
 ```bash
-./manage.sh         # Main management interface (12 menu options)
-./scripts/tools     # Interactive launcher for all tools and scripts
-```
-
-### Core Management Commands
-```bash
-./tools_management/build.sh              # Compile all tools from sources/
-./tools_management/sync-submodules.sh    # Update all submodules to latest
-./tools_management/set-permissions.sh    # Fix executable permissions
+tools                 # Interactive picker (autodiscovers bin/ + scripts/)
+tools build           # Compile all tools from sources/ -> bin/
+tools submodules      # Update all submodules to latest
+tools permissions     # Fix executable permissions
+tools new-tool        # Add a new tool repo as a submodule
 ```
 
 ### AI Assistant Configuration System
-The multi-assistant configuration system supports Claude, Codex, Gemini, and OpenCode:
+Supports Claude, Codex, Gemini, OpenCode, and Pi. Source of truth is `assistants/source/`; everything else is generated.
 
 ```bash
-./scripts/configure-assistants-global      # Setup global configurations
-./scripts/clean-global-assistants-configs  # Remove all configurations
-./scripts/create-assistant-command         # Create command/prompt/agent templates
-./scripts/sync-assistant-commands -t all   # Sync commands to global directories
+tools assist gen          # Regenerate all assistant configs from source/
+tools assist gen pi       # Regenerate one (claude|codex|gemini|opencode|pi)
+tools assist sync         # Push to global config dirs (merges, non-destructive)
+tools assist doctor       # Check assistant config health
+tools assist import       # Import global commands/agents back into source/
 ```
 
 **Configuration Locations**:
 - **Settings**: `~/.claude/settings.json`, `~/.codex/config.toml`, `~/.gemini/settings.json`
-- **Memory files**: `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`
+- **Memory files**: `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`, `~/.pi/agent/AGENTS.md`
 - **Commands**: `~/.claude/commands/`, `~/.codex/prompts/`, `~/.gemini/commands/`
+- **Pi skills**: `~/.pi/agent/skills/<name>/SKILL.md`
 
 **Command Formats by Assistant**:
 - Claude/Gemini: `.md` files in `commands/` (uses `$ARGUMENTS` placeholder)
-- Codex: `.md/.toml` files in `prompts/` (entire file becomes prompt)
-- Common: `.md` files automatically synced to all assistants
+- Codex: `.md` files in `prompts/` (entire file becomes prompt)
+- Pi: no slash-commands; each command becomes a skill, instructions share Codex's `AGENTS.md`
 
 **Safe Merging**: Preserves existing settings while adding new configurations.
 
@@ -121,7 +111,7 @@ chmod +x ~/tools/scripts/myscript.sh
 #### Create New Tool (Recommended)
 ```bash
 cd ~/tools
-./tools_management/init-new-tool.sh
+tools new-tool
 ```
 
 #### Add Existing Repository as Submodule

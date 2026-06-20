@@ -13,49 +13,41 @@ This is a personal CLI utilities management system organized as a git repository
 
 # Common Development Tasks
 
-## Setup and Initialization
-```bash
-./manage.sh                    # Interactive management interface (requires gum)
-./tools_management/init-tools.sh    # Complete setup (build, configure, permissions)
-```
+Everything is driven by a single `tools` command (in `scripts/`, on PATH).
 
-## Building and Development
+## Setup, Building, Tool Management
 ```bash
-./tools_management/build.sh         # Compile all tools from sources/
-./tools_management/set-permissions.sh   # Fix executable permissions
-./tools_management/sync-submodules.sh   # Update all submodules to latest
-```
-
-## Tool Management
-```bash
-./tools_management/init-new-tool.sh     # Create new tool repository as submodule
-./tools                              # Interactive launcher for all tools
+tools                 # Interactive menu (autodiscovers bin/ + scripts/)
+tools init            # Complete setup (build, configure shell, permissions)
+tools build           # Compile all tools from sources/ -> bin/
+tools submodules      # Update all submodules to latest
+tools permissions     # Fix executable permissions
+tools new-tool        # Create a new tool repository as a submodule
 ```
 
 ## Assistant Configuration
 ```bash
-./scripts/configure-assistants-global      # Setup global AI assistant configurations
-./scripts/create-assistant-command         # Create new command/prompt templates
-./scripts/clean-global-assistants-configs  # Remove all assistant configurations
-
-# Sync commands to global directories (overwrites global configs)
-echo "y" | ./scripts/sync-assistant-commands -t all  # Auto-confirm sync all
-./scripts/sync-assistant-commands -t claude          # Sync only Claude
-./scripts/sync-assistant-commands -n                 # Dry run
+tools assist gen        # Regenerate all assistant configs from assistants/source/
+tools assist gen pi     # Regenerate just one (claude|codex|gemini|opencode|pi)
+tools assist sync       # Push generated configs to global dirs (merges, non-destructive)
+tools assist sync --dry # Preview the sync
+tools assist doctor     # Check assistant config health
+tools assist import     # Import global commands/agents back into source/
 ```
+`tools assist` runs `sources/assistants-cli/cli.ts` via `bun run` (no compiled binary).
 
 # Architecture Details
 
 ## Directory Structure
-- `manage.sh` - Main interactive interface using gum for navigation
+- `scripts/tools` - Single entry point / dispatcher (the `tools` command)
 - `shell/` - Shell configuration and runtime integration
   - `shell/rc` - Main shell config (exports PATH, loads other configs)
   - `shell/shortcuts` - Custom aliases and shortcuts
-- `tools_management/` - Core management automation scripts
+- `tools_management/` - Leaf scripts invoked by `tools` (build, submodules, permissions)
 - `scripts/` - Utility scripts (automatically in PATH)
-- `bin/` - Compiled executables from sources/ (automatically in PATH)
+- `bin/` - Compiled executables from sources/ (gitignored, automatically in PATH)
 - `sources/` - Source code repositories as git submodules
-- `assistants/` - Multi-assistant AI configuration system
+- `assistants/` - Multi-assistant AI configuration system (only `source/` is tracked)
 
 ## Build System Architecture
 The build system in `tools_management/build.sh` automatically detects project types and compiles:
@@ -72,26 +64,29 @@ The build system in `tools_management/build.sh` automatically detects project ty
 - Provides modular configuration loading for shortcuts, temp secrets, and functions
 
 ## AI Assistant Configuration Architecture
-The `assistants/` system uses `bin/assistants-cli` to manage configurations.
+The `assistants/` system is driven by `sources/assistants-cli/cli.ts` (run via `bun run`, wrapped by `tools assist`). Supported assistants: Claude, Codex, Gemini, OpenCode, Pi.
 
-**Source of truth for shared content**: `assistants/source/`
+**Source of truth (only thing tracked in git)**: `assistants/source/`
 - `global_instructions.md`: merged into every assistant config inside `<!-- GLOBAL INSTRUCTIONS START/END -->` block
 - `commands/`: commands synced to all assistants
-- `agents/`: agents synced to all assistants
+- `agents/`: agents synced to assistants that support them (Claude, OpenCode)
 
-**Per-assistant files** (`claude/CLAUDE.md`, `codex/AGENTS.md`, `gemini/GEMINI.md`, `opencode/global_instructions.md`): hand-edited for assistant-specific content — `gen` only updates the global instructions block, leaving the rest intact.
+The per-assistant trees (`assistants/{claude,codex,gemini,opencode,pi}/`) are **generated and gitignored** — never edit them by hand; edit `source/` and regenerate.
+
+**Per-assistant globals** (`claude/CLAUDE.md`, `codex/AGENTS.md`, `gemini/GEMINI.md`, `opencode/global_instructions.md`, `pi/AGENTS.md`): `gen` only updates the `<!-- GLOBAL INSTRUCTIONS -->` block, leaving any hand-written remainder intact.
 
 **Workflow**:
 ```bash
-bin/assistants-cli gen all        # sync global instructions + commands/agents from source
-bin/assistants-cli gen claude     # same, claude only
-bin/assistants-cli sync-global    # push assistants/ to ~/.claude/, ~/.gemini/, ~/.config/opencode/, ~/.codex/
-bin/assistants-cli doctor         # check config health
+tools assist gen          # regenerate all from source/
+tools assist gen claude   # regenerate one (claude|codex|gemini|opencode|pi)
+tools assist sync         # push to ~/.claude, ~/.codex, ~/.gemini, ~/.config/opencode, ~/.pi/agent (merges)
+tools assist doctor       # check config health
 ```
 
-**Command formats**:
-- Claude/Gemini/OpenCode: `.md` files in `commands/`
-- Codex: `.md/.toml` files in `prompts/`
+**Command / instruction formats per assistant**:
+- Claude / Gemini / OpenCode: `.md` (or `.toml` for Gemini) files in `commands/`
+- Codex: `.md` files in `prompts/`
+- Pi: no slash-commands — each command becomes a skill at `skills/<name>/SKILL.md`; global instructions share Codex's `AGENTS.md` format, synced to `~/.pi/agent/`
 
 # Development Guidelines
 
@@ -105,7 +100,7 @@ bin/assistants-cli doctor         # check config health
 
 2. **Compile and test locally**:
    ```bash
-   ./tools_management/build.sh  # Compile from current local state
+   tools build  # Compile from current local state
    ```
 
 3. **Sync parent repo with latest submodule versions**:
@@ -125,7 +120,7 @@ Scripts use omarchy-compatible terminal palette colors:
 - **Permissions**: `tools_management/set-permissions.sh` handles executable permissions for both scripts/ and bin/
 - **Language detection**: Build system automatically detects Rust (Cargo.toml), Go (go.mod), Zig (build.zig), Make (Makefile)
 - **Configuration merging**: Assistant configs preserve existing settings while adding new ones
-- **Interactive interfaces**: Main interfaces (`manage.sh`, `tools`) use gum for navigation
+- **Interactive interface**: `tools` (with no args) opens a gum picker that autodiscovers everything in bin/ and scripts/
 
 # Important Reminders
 - Do what has been asked; nothing more, nothing less

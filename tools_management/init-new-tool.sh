@@ -34,4 +34,4 @@ git commit -m "feat: add $LOCAL_DIR submodule"
 
 echo ""
 echo "Tool created and added as submodule!"
-echo "Run manage.sh option 3 to compile the tool."
+echo "Run 'tools build' to compile the tool."
