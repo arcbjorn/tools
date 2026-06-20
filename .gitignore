@@ -1,2 +1,13 @@
 bin/
 shell/temp
+
+# Generated assistant configs - source of truth is assistants/source/ only.
+# Regenerate with: tools assist gen
+/assistants/claude/
+/assistants/codex/
+/assistants/gemini/
+/assistants/opencode/
+/assistants/pi/
+
+# macOS
+.DS_Store
