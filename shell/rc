@@ -1,10 +1,22 @@
 # Tools directory configuration
 export PATH="$HOME/tools/bin:$HOME/tools/scripts:$PATH"
 
-# Load all shell configuration files:
+# Load all top-level shell configuration files:
 # - shortcuts: aliases and shortcuts
 # - temp: temporary commands with secrets (shouldn't be committed)
 # - other files: shell functions and helpers
+# (completions/ is a directory, so it is skipped here and wired up below.)
 for file in "$HOME/tools/shell"/*; do
   [ -f "$file" ] && [ "$file" != "$HOME/tools/shell/rc" ] && source "$file"
 done
+
+# Shell completions: native per-shell, loaded the way each shell expects.
+# zsh logic lives in init.zsh (sourced only under zsh) so bash never parses
+# zsh-only syntax; bash sources the *.bash completion scripts directly.
+if [ -n "${ZSH_VERSION:-}" ]; then
+  [ -f "$HOME/tools/shell/completions/init.zsh" ] && source "$HOME/tools/shell/completions/init.zsh"
+elif [ -n "${BASH_VERSION:-}" ]; then
+  for c in "$HOME/tools/shell/completions"/*.bash; do
+    [ -f "$c" ] && source "$c"
+  done
+fi

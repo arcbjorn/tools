@@ -1,0 +1,29 @@
+#compdef passcopy
+
+# zsh completion for: passcopy <entry> <field>
+#
+# Completes a single argument at each position, so it uses _describe (not
+# _values, which is for comma-separated lists and misbehaves for single args).
+
+_passcopy () {
+	local prefix="${PASSWORD_STORE_DIR:-$HOME/.password-store}"
+	local -a entries fields
+
+	case $CURRENT in
+		2)  # entry: every pass-store leaf (.gpg), prefix and suffix stripped
+			entries=(${(f)"$(find -L "$prefix" \( -name .git -o -name .gpg-id \) -prune -o -type f -name '*.gpg' -print 2>/dev/null | sed -e "s#${prefix}/\{0,1\}##" -e 's#\.gpg##' | sort)"})
+			_describe -t entries 'pass entry' entries
+			;;
+		3)  # field: common labels (real fields can't be read without a GPG pin)
+			fields=(
+				password login username email user account website street city
+				country ip phone address notes url port host server api key token
+				id pin code ssn license iban swift bic name firstname lastname
+				company otp totp secret recovery card cvv passport
+			)
+			_describe -t fields 'field' fields
+			;;
+	esac
+}
+
+_passcopy
