@@ -9,6 +9,7 @@
 #   tools permissions     fix executable permissions on bin/ + scripts/
 #   tools init            full setup (build + configure shell + permissions)
 #   tools assist <cmd>    assistant config (gen|sync|doctor|import) via assistants-cli
+#   tools agents [roles]  launch orchestrated CLI agent swarm in tmux
 #   tools help            this help
 #
 set -euo pipefail
@@ -34,6 +35,13 @@ run_mgmt() {
     [[ -f "$path" ]] || die "missing $path"
     [[ -x "$path" ]] || chmod +x "$path"
     "$path" "$@"
+}
+
+run_agents() {
+    local script="$TOOLS_DIR/sources/arkestra/arkestra.sh"
+    [[ -f "$script" ]] || die "missing $script (is the submodule checked out?)"
+    [[ -x "$script" ]] || chmod +x "$script"
+    "$script" "$@"
 }
 
 run_assist() {
@@ -119,6 +127,7 @@ main() {
         configure-shell)      run_mgmt configure-shell.sh "$@" ;;
         new-tool)             run_mgmt init-new-tool.sh "$@" ;;
         assist)               run_assist "$@" ;;
+        agents)               run_agents "$@" ;;
         help|-h|--help)       usage ;;
         *) die "unknown command '$cmd' (try: tools help)" ;;
     esac

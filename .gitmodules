@@ -1,9 +1,9 @@
 [submodule "sources/gh-activity-graph-sh"]
 	path = sources/gh-activity-graph-sh
 	url = https://github.com/arcbjorn/gh-activity-graph-sh.git
-[submodule "sources/agents-orchestrator"]
-	path = sources/agents-orchestrator
-	url = https://github.com/arcbjorn/agents-orchestrator.git
+[submodule "sources/arkestra"]
+	path = sources/arkestra
+	url = https://github.com/arcbjorn/arkestra.git
 [submodule "sources/workflow"]
 	path = sources/workflow
 	url = https://github.com/arcbjorn/workflow.git
