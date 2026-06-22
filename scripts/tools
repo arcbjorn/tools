@@ -9,7 +9,8 @@
 #   tools permissions     fix executable permissions on bin/ + scripts/
 #   tools init            full setup (build + configure shell + permissions)
 #   tools assist <cmd>    assistant config (gen|sync|doctor|import) via assistants-cli
-#   tools agents [roles]  launch orchestrated CLI agent swarm in tmux
+#   tools agents [roles]  launch orchestrated CLI agents team in tmux
+#   tools dev             open a project dev session in tmux (frontend/backend)
 #   tools help            this help
 #
 set -euo pipefail
@@ -128,6 +129,7 @@ main() {
         new-tool)             run_mgmt init-new-tool.sh "$@" ;;
         assist)               run_assist "$@" ;;
         agents)               run_agents "$@" ;;
+        dev)                  "$TOOLS_DIR/scripts/dev" "$@" ;;
         help|-h|--help)       usage ;;
         *) die "unknown command '$cmd' (try: tools help)" ;;
     esac
