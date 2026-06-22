@@ -18,7 +18,7 @@ This system follows a three-layer architecture:
 ├── scripts/                # Shell scripts (immediately available)
 ├── sources/                # Git submodules for tools needing compilation
 │   ├── gh-activity-graph-sh/  # GitHub activity visualization
-│   ├── agents-orchestrator/   # AI agents management system
+│   ├── arkestra/              # Agent teams orchestrated by Claude (tools agents)
 │   ├── workflow/              # Workflow automation tools
 │   └── assistants-cli/        # Assistant CLI utilities
 ├── assistants/             # Multi-assistant AI configuration system
@@ -71,6 +71,28 @@ tools build           # Compile all tools from sources/ -> bin/
 tools submodules      # Update all submodules to latest
 tools permissions     # Fix executable permissions
 tools new-tool        # Add a new tool repo as a submodule
+```
+
+### Agent Teams (arkestra)
+A team of CLI coding agents in tmux, orchestrated by Claude. The lead delegates
+scoped tasks to cheaper specialist agents and integrates their work. See
+`sources/arkestra/README.md` for details.
+
+```bash
+tools agents                     # default roles: coding arch git
+tools agents arch coding impl logs git   # all roles
+tools agents set <role>          # set a role's harness (CLI) + model
+tools agents stop [--all]        # stop a running team
+```
+
+### Dev Sessions
+Open a project dev session in tmux — e.g. frontend and backend in side-by-side
+panes, each running its own command. Layout config lives in `.tools-dev` per repo.
+
+```bash
+tools dev             # launch from .tools-dev (or a generic split), then attach
+tools dev set         # interactive builder: define 2-4 panes (name | dir | command)
+tools dev stop        # kill this project's dev session
 ```
 
 ### AI Assistant Configuration System
