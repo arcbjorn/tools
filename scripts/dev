@@ -160,12 +160,17 @@ cmd_set() {
 
   local body="" i=1
   while [ "$i" -le "$count" ]; do
-    printf "\n${CYAN}pane %d${NC}\n" "$i" >&2
     local nm dr cm dnm ddr dcm
     dnm=$(nth "$NAMES" "$i"); ddr=$(nth "$DIRS" "$i"); dcm=$(nth "$CMDS" "$i")
+    # header shows the CURRENT values so you always have context while typing.
+    printf "\n${B}${CYAN}pane %d of %d${NC}" "$i" "$count" >&2
+    if [ -n "$dnm" ]; then printf "  ${DIM}current: %s | %s | %s${NC}" "$dnm" "${ddr:-.}" "${dcm:-—}" >&2; fi
+    printf "\n" >&2
     nm=$(ui_input "name:" "${dnm:-pane$i}")
     dr=$(ui_input "dir (relative to repo root):" "${ddr:-.}")
     cm=$(ui_input "command (blank = just a shell):" "$dcm")
+    # echo back what was captured (gum clears its own line, so confirm it here).
+    printf "  ${GREEN}✓${NC} ${B}%s${NC} ${GRAY}|${NC} %s ${GRAY}|${NC} %s\n" "$nm" "$dr" "${cm:-${DIM}(shell)${NC}}" >&2
     body="$body$nm | $dr | $cm
 "
     i=$((i+1))
@@ -174,8 +179,13 @@ cmd_set() {
   { printf '# tools dev layout for %s\n' "$(basename "$ROOT")"
     printf '# format: <name> | <dir> | <command>\n'
     printf '%s' "$body"; } > "$CONF"
-  printf "\n${GREEN}✓${NC} saved ${B}%s${NC} (%d panes)\n" "$CONF" "$count" >&2
-  printf "  ${DIM}run ${NC}${B}tools dev${NC}${DIM} to launch${NC}\n" >&2
+  # final summary so you see the whole config at a glance.
+  printf "\n${GREEN}✓${NC} saved ${B}%s${NC} ${DIM}(%d panes)${NC}\n" "$CONF" "$count" >&2
+  printf '%s' "$body" | while IFS='|' read -r sn sd sc; do
+    printf "    ${CYAN}%s${NC} ${GRAY}·${NC} %s ${GRAY}·${NC} %s\n" \
+      "$(echo "$sn" | sed 's/ *$//')" "$(echo "$sd" | sed 's/^ *//;s/ *$//')" "$(echo "$sc" | sed 's/^ *//')" >&2
+  done
+  printf "  ${DIM}launch: ${NC}${B}tools dev${NC}\n" >&2
 }
 
 # ---- generic fallback: 2-pane split, offer to save ----
