@@ -3,6 +3,7 @@
 # dev - open a project dev session in tmux (e.g. frontend + backend panes).
 #
 #   tools dev            launch the session from .tools-dev (or a generic split)
+#   tools dev set        interactive builder: define 2-4 panes -> writes .tools-dev
 #   tools dev edit       open .tools-dev in $EDITOR
 #   tools dev stop       kill this project's dev session
 #
@@ -21,6 +22,17 @@ set -eu
 BLUE='\033[38;5;4m'; GREEN='\033[38;5;2m'; YELLOW='\033[38;5;3m'
 CYAN='\033[38;5;6m'; GRAY='\033[38;5;8m'; B='\033[1m'; DIM='\033[2m'; NC='\033[0m'
 die() { printf "\033[38;5;1m✗${NC} %s\n" "$*" >&2; exit 1; }
+
+HAS_GUM=0; [ "${TOOLS_DEV_NO_GUM:-0}" != 1 ] && command -v gum >/dev/null 2>&1 && HAS_GUM=1
+ui_input() {  # <prompt> [default]
+  if [ "$HAS_GUM" = 1 ]; then gum input --prompt="  $1 " --value="${2:-}" 2>/dev/tty
+  else printf "  %s [%s] " "$1" "${2:-}" >&2; local v; read -r v || true; printf '%s' "${v:-${2:-}}"; fi
+}
+ui_choose() {  # <header> <newline-opts>
+  if [ "$HAS_GUM" = 1 ]; then printf '%s' "$2" | gum choose --header="$1" --cursor="❯ " --cursor.foreground=2 2>/dev/tty
+  else printf "${DIM}%s${NC}\n" "$1" >&2; local i=1; printf '%s\n' "$2" | while IFS= read -r o; do [ -n "$o" ] && printf "  %2d %s\n" "$i" "$o" >&2; i=$((i+1)); done
+    printf "  number: " >&2; local p; read -r p || true; printf '%s' "$2" | sed -n "${p}p"; fi
+}
 
 command -v tmux >/dev/null 2>&1 || die "tmux is required"
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
@@ -70,33 +82,79 @@ load_conf() {
 
 nth() { printf '%s\n' "$1" | sed -n "$2p"; }
 
+pdir_of() { local d="$ROOT/$1"; [ -d "$d" ] && echo "$d" || echo "$ROOT"; }
+
 launch() {
   tmux has-session -t "$SESSION" 2>/dev/null && {
     printf "${YELLOW}!${NC} '%s' already running — ${B}tmux attach -t %s${NC}\n" "$SESSION" "$SESSION" >&2
     return 0
   }
-  local first_dir; first_dir="$ROOT/$(nth "$DIRS" 1)"
-  [ -d "$first_dir" ] || first_dir="$ROOT"
-  tmux new-session -d -s "$SESSION" -c "$first_dir"
+  [ "$N" -gt 4 ] && N=4   # one screen holds up to 4 cleanly
+
+  tmux new-session -d -s "$SESSION" -c "$(pdir_of "$(nth "$DIRS" 1)")"
   style "$SESSION"
-  local i=1
+
+  # create the remaining panes (split direction picked for a clean smart layout).
+  local i=2
   while [ "$i" -le "$N" ]; do
-    local nm dr cm pdir
-    nm=$(nth "$NAMES" "$i"); dr=$(nth "$DIRS" "$i"); cm=$(nth "$CMDS" "$i")
-    pdir="$ROOT/$dr"; [ -d "$pdir" ] || pdir="$ROOT"
-    if [ "$i" -eq 1 ]; then
-      tmux send-keys -t "$SESSION" "cd '$pdir'; clear" Enter
-    else
-      tmux split-window -h -t "$SESSION" -c "$pdir"
-      tmux select-layout -t "$SESSION" even-horizontal
-    fi
-    tmux select-pane -t "$SESSION" -T "$nm"
-    [ -n "$cm" ] && tmux send-keys -t "$SESSION" "$cm" Enter
+    local pdir; pdir=$(pdir_of "$(nth "$DIRS" "$i")")
+    case "$N:$i" in
+      2:2)   tmux split-window -h -t "$SESSION" -c "$pdir" ;;        # side by side
+      3:2)   tmux split-window -h -t "$SESSION" -c "$pdir" ;;        # one left | two right
+      3:3)   tmux split-window -v -t "$SESSION:.1" -c "$pdir" ;;     # stack the right column
+      4:*)   tmux split-window -h -t "$SESSION" -c "$pdir" ;;        # 2x2 via tiled below
+    esac
     i=$((i+1))
   done
-  tmux select-pane -t "$SESSION" -L 2>/dev/null || true
+
+  # smart layout per pane count
+  case "$N" in
+    2) tmux select-layout -t "$SESSION" even-horizontal ;;
+    3) tmux set -t "$SESSION" main-pane-width "50%" 2>/dev/null \
+         || tmux setw -t "$SESSION" main-pane-width 80
+       tmux select-layout -t "$SESSION" main-vertical ;;           # left half, two stacked right
+    4) tmux select-layout -t "$SESSION" tiled ;;                   # 2x2 grid
+  esac
+
+  # title each pane and run its command
+  i=1
+  while [ "$i" -le "$N" ]; do
+    local nm cm; nm=$(nth "$NAMES" "$i"); cm=$(nth "$CMDS" "$i")
+    tmux select-pane -t "$SESSION:.$((i-1))" -T "$nm"
+    [ -n "$cm" ] && tmux send-keys -t "$SESSION:.$((i-1))" "clear; $cm" Enter
+    i=$((i+1))
+  done
+  tmux select-pane -t "$SESSION:.0"
   printf "${GREEN}✓${NC} dev session ${B}%s${NC} (%d panes)  →  ${B}tmux attach -t %s${NC}\n" \
     "$SESSION" "$N" "$SESSION" >&2
+}
+
+# ---- interactive builder: write .tools-dev (panes count -> name/dir/command) ----
+cmd_set() {
+  printf "\n${B}${BLUE}configure dev session${NC} ${DIM}%s${NC}\n" "$ROOT" >&2
+  local count; count=$(ui_choose "how many panes?" "2
+3
+4")
+  count="${count%% *}"
+  case "$count" in 2|3|4) :;; *) die "pick 2, 3, or 4" ;; esac
+
+  local body="" i=1
+  while [ "$i" -le "$count" ]; do
+    printf "\n${CYAN}pane %d${NC}\n" "$i" >&2
+    local nm dr cm
+    nm=$(ui_input "name:" "pane$i")
+    dr=$(ui_input "dir (relative to repo root):" ".")
+    cm=$(ui_input "command (blank = just a shell):")
+    body="$body$nm | $dr | $cm
+"
+    i=$((i+1))
+  done
+
+  { printf '# tools dev layout for %s\n' "$(basename "$ROOT")"
+    printf '# format: <name> | <dir> | <command>\n'
+    printf '%s' "$body"; } > "$CONF"
+  printf "\n${GREEN}✓${NC} saved ${B}%s${NC} (%d panes)\n" "$CONF" "$count" >&2
+  printf "  ${DIM}run ${NC}${B}tools dev${NC}${DIM} to launch${NC}\n" >&2
 }
 
 # ---- generic fallback: 2-pane split, offer to save ----
@@ -107,18 +165,16 @@ right"; DIRS=".
 ."; CMDS="
 "; N=2
   launch
-  printf "\n${GRAY}save a layout so next time it auto-runs your commands?${NC}\n" >&2
-  printf "  create ${B}%s${NC} with lines like:\n" "$CONF" >&2
-  printf "  ${CYAN}web | ./web | pnpm dev${NC}\n  ${CYAN}api | ./api | pnpm start:dev${NC}\n" >&2
-  printf "  (run ${B}tools dev edit${NC} to do it)\n" >&2
+  printf "\n${GRAY}tip: run ${NC}${B}tools dev set${NC}${GRAY} to define named panes that auto-run your commands.${NC}\n" >&2
 }
 
 case "${1:-}" in
+  set)   cmd_set ;;
   edit)  "${EDITOR:-vi}" "$CONF" ;;
   stop)  tmux kill-session -t "$SESSION" 2>/dev/null \
            && printf "${GREEN}✓${NC} stopped %s\n" "$SESSION" >&2 \
            || printf "${GRAY}no '%s' session.${NC}\n" "$SESSION" >&2 ;;
   ""|start)
          if load_conf; then launch; else generic_then_offer_save; fi ;;
-  *)     die "usage: tools dev [edit|stop]" ;;
+  *)     die "usage: tools dev [set|edit|stop]" ;;
 esac
