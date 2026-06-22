@@ -116,23 +116,43 @@ launch() {
     4) tmux select-layout -t "$SESSION" tiled ;;                   # 2x2 grid
   esac
 
-  # title each pane and run its command
+  # title each pane and run its command. Panes with no command get a one-line
+  # hint so an empty shell isn't mysterious.
   i=1
   while [ "$i" -le "$N" ]; do
     local nm cm; nm=$(nth "$NAMES" "$i"); cm=$(nth "$CMDS" "$i")
     tmux select-pane -t "$SESSION:.$((i-1))" -T "$nm"
-    [ -n "$cm" ] && tmux send-keys -t "$SESSION:.$((i-1))" "clear; $cm" Enter
+    if [ -n "$cm" ]; then
+      tmux send-keys -t "$SESSION:.$((i-1))" "clear; $cm" Enter
+    else
+      tmux send-keys -t "$SESSION:.$((i-1))" \
+        "clear; printf '\033[2m[%s] no command — set one with: tools dev set\033[0m\n' '$nm'" Enter
+    fi
     i=$((i+1))
   done
   tmux select-pane -t "$SESSION:.0"
-  printf "${GREEN}✓${NC} dev session ${B}%s${NC} (%d panes)  →  ${B}tmux attach -t %s${NC}\n" \
-    "$SESSION" "$N" "$SESSION" >&2
+  printf "${GREEN}✓${NC} dev session ${B}%s${NC} (%d panes)\n" "$SESSION" "$N" >&2
+  printf "  ${DIM}reconfigure: ${NC}${B}tools dev set${NC}${DIM}   ·   stop: ${NC}${B}tools dev stop${NC}\n" >&2
+
+  # auto-attach — but NOT if already inside tmux (nested attach is refused).
+  if [ -n "${TMUX:-}" ]; then
+    tmux switch-client -t "$SESSION" 2>/dev/null \
+      || printf "  ${YELLOW}!${NC} inside tmux — ${B}tmux switch-client -t %s${NC}\n" "$SESSION" >&2
+  else
+    exec tmux attach -t "$SESSION"
+  fi
 }
 
 # ---- interactive builder: write .tools-dev (panes count -> name/dir/command) ----
 cmd_set() {
   printf "\n${B}${BLUE}configure dev session${NC} ${DIM}%s${NC}\n" "$ROOT" >&2
-  local count; count=$(ui_choose "how many panes?" "2
+  # pre-fill from the existing config so changing one thing = press Enter through
+  # the rest. (load_conf populates NAMES/DIRS/CMDS/N.)
+  load_conf || true
+  local cur_n="$N"
+  [ "$cur_n" -gt 0 ] 2>/dev/null && printf "  ${DIM}editing existing (%d panes) — Enter keeps a value${NC}\n" "$cur_n" >&2
+
+  local count; count=$(ui_choose "how many panes?${cur_n:+ (now $cur_n)}" "2
 3
 4")
   count="${count%% *}"
@@ -141,10 +161,11 @@ cmd_set() {
   local body="" i=1
   while [ "$i" -le "$count" ]; do
     printf "\n${CYAN}pane %d${NC}\n" "$i" >&2
-    local nm dr cm
-    nm=$(ui_input "name:" "pane$i")
-    dr=$(ui_input "dir (relative to repo root):" ".")
-    cm=$(ui_input "command (blank = just a shell):")
+    local nm dr cm dnm ddr dcm
+    dnm=$(nth "$NAMES" "$i"); ddr=$(nth "$DIRS" "$i"); dcm=$(nth "$CMDS" "$i")
+    nm=$(ui_input "name:" "${dnm:-pane$i}")
+    dr=$(ui_input "dir (relative to repo root):" "${ddr:-.}")
+    cm=$(ui_input "command (blank = just a shell):" "$dcm")
     body="$body$nm | $dr | $cm
 "
     i=$((i+1))
