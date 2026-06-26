@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# arkestra - standalone front door to the orchestrated-agents CLI, mirroring
+# `tools agents`. Both run the same script in sources/arkestra; the name you
+# invoke (arkestra / ark / tools agents) is what its help and the orchestrator
+# brief print, so self-references always match how you launched.
+set -eu
+here="$(cd "$(dirname "$0")" && pwd)"
+script="$here/../sources/arkestra/arkestra.sh"
+[ -f "$script" ] || { printf 'missing %s (is the submodule checked out?)\n' "$script" >&2; exit 1; }
+[ -x "$script" ] || chmod +x "$script"
+exec env ARKESTRA_INVOKE=arkestra "$script" "$@"

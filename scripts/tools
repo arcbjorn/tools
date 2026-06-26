@@ -42,7 +42,9 @@ run_agents() {
     local script="$TOOLS_DIR/sources/arkestra/arkestra.sh"
     [[ -f "$script" ]] || die "missing $script (is the submodule checked out?)"
     [[ -x "$script" ]] || chmod +x "$script"
-    "$script" "$@"
+    # arkestra renders its help/hints/orchestrator-brief with this name, so via the
+    # dispatcher it says "tools agents ..."; standalone it's "arkestra"/"ark".
+    ARKESTRA_INVOKE="tools agents" "$script" "$@"
 }
 
 run_assist() {

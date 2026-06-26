@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# ark - short alias for `arkestra` (the orchestrated-agents CLI). Same script,
+# same behavior; only the printed command name differs.
+set -eu
+here="$(cd "$(dirname "$0")" && pwd)"
+script="$here/../sources/arkestra/arkestra.sh"
+[ -f "$script" ] || { printf 'missing %s (is the submodule checked out?)\n' "$script" >&2; exit 1; }
+[ -x "$script" ] || chmod +x "$script"
+exec env ARKESTRA_INVOKE=ark "$script" "$@"
