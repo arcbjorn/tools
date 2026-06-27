@@ -19,6 +19,55 @@ alias gstp='git stash pop'
 alias pgp='pass git push'
 alias lg='lazygit'
 
+_opencode_active_model() {
+    local model_json="${XDG_STATE_HOME:-$HOME/.local/state}/opencode/model.json"
+    if [ -f "$model_json" ]; then
+        sed -E 's/.*"recent":\[\{"providerID":"([^"]+)","modelID":"([^"]+)".*/\1\/\2/' "$model_json" 2>/dev/null | head -1
+        return
+    fi
+
+    grep -iE '"model"[[:space:]]*:' "$HOME/.config/opencode/opencode.jsonc" 2>/dev/null \
+        | head -1 \
+        | sed -E 's/.*"model"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/'
+}
+
+gcgp() {
+    local model="${GCGP_MODEL:-}"
+    local task="Review git status, git diff, and git diff --staged. Commit current changes using granular conventional commits, then push the current branch.
+
+COMMIT RULE (follow exactly; do NOT think, just apply):
+- ONE commit per file OR per folder. NEVER lump everything into a single commit. Do NOT 'git add -A' then commit once.
+- A folder may be one commit ONLY if every file in it is the exact same change (e.g. a rename); otherwise commit file by file.
+- If staged changes mix goals, unstage with git restore --staged <path> before staging narrowly.
+- For each commit: stage just that file/folder (git add <path>) then commit it before staging the next.
+- Message format: <type>(<scope>): <description> -- types: feat fix docs style ref test chore.
+- SINGLE LINE ONLY. No body, no description, no extra paragraphs. Max 50 chars total. Lowercase. No trailing period.
+- Use: git commit -m \"<message>\" (one -m only; never a second -m or a heredoc body).
+
+PUSH RULE:
+- After all needed commits are made, run git push.
+- If there are no changes to commit, push any existing unpushed commits.
+- If the current branch has no upstream and origin exists, use git push -u origin HEAD.
+- If pushing is blocked by credentials, remote setup, or conflicts, report the exact blocker."
+
+    if [ "$#" -gt 0 ]; then
+        task="$task
+
+USER GUIDANCE:
+$*"
+    fi
+
+    if [ -z "$model" ]; then
+        model="$(_opencode_active_model)"
+    fi
+
+    if [ -n "$model" ]; then
+        opencode run --dangerously-skip-permissions -m "$model" "$task"
+    else
+        opencode run --dangerously-skip-permissions "$task"
+    fi
+}
+
 # File listing shortcuts (eza compatible)
 alias ll='ls -la'
 alias la='ls -A'
@@ -66,6 +115,14 @@ alias wf='workflow'
 # GitHub shortcuts
 alias view-repo='gh repo view --web'
 
+_shortcuts_render() {
+    if command -v bat >/dev/null 2>&1; then
+        bat --language=bash --style=plain --color=always
+    else
+        cat
+    fi
+}
+
 # Show all shortcuts with syntax highlighting
 shortcuts() {
     echo ""
@@ -73,26 +130,29 @@ shortcuts() {
     echo ""
 
     echo "Git Commands:"
-    cat ~/tools/shell/shortcuts | grep "^alias g" | sort | bat --language=bash --style=plain --color=always
+    {
+        grep "^alias g" ~/tools/shell/shortcuts
+        echo "gcgp='opencode commit + git push'"
+    } | sort | _shortcuts_render
     echo ""
 
     echo "File Listing:"
-    cat ~/tools/shell/shortcuts | grep "^alias l" | sort | bat --language=bash --style=plain --color=always
+    grep "^alias l" ~/tools/shell/shortcuts | sort | _shortcuts_render
     echo ""
 
     echo "Claude:"
-    cat ~/tools/shell/shortcuts | grep "^alias c" | sort | bat --language=bash --style=plain --color=always
+    grep "^alias c" ~/tools/shell/shortcuts | sort | _shortcuts_render
     echo ""
 
     echo "SSH/Network:"
-    cat ~/tools/shell/shortcuts | grep -E "^alias (base|nova|status)" | sort | bat --language=bash --style=plain --color=always
+    grep -E "^alias (base|nova|status)" ~/tools/shell/shortcuts | sort | _shortcuts_render
     echo ""
 
     echo "Tools:"
-    cat ~/tools/shell/shortcuts | grep "^alias w" | sort | bat --language=bash --style=plain --color=always
+    grep "^alias w" ~/tools/shell/shortcuts | sort | _shortcuts_render
     echo ""
 
     echo "GitHub:"
-    cat ~/tools/shell/shortcuts | grep "^alias view-" | sort | bat --language=bash --style=plain --color=always
+    grep "^alias view-" ~/tools/shell/shortcuts | sort | _shortcuts_render
     echo ""
 }
