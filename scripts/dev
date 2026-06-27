@@ -2,7 +2,7 @@
 #
 # dev - open a project dev session in tmux (e.g. frontend + backend panes).
 #
-#   tools dev            launch the session from .tools-dev (or a generic split)
+#   tools dev            launch from .tools-dev, configuring it first if missing
 #   tools dev set        interactive builder: define 2-4 panes -> writes .tools-dev
 #   tools dev edit       open .tools-dev in $EDITOR
 #   tools dev stop       kill this project's dev session
@@ -16,8 +16,7 @@
 # Lines starting with # are ignored. `dir` is relative to the repo root.
 # The `hunk diff` entry is special: it launches last in its own tmux window so
 # the Git changes viewer always has the whole screen.
-# No config? -> a generic 2-pane split in the current dir, and you're offered to
-# save it as .tools-dev for next time.
+# No config? -> the interactive builder creates .tools-dev first, then launches.
 #
 # bash 3.2 safe (macOS default).
 set -eu
@@ -49,6 +48,9 @@ yes"; fi
   printf "  %s [%s] " "$1" "$label" >&2
   read -r v || true
   case "${v:-$default}" in y|Y|yes|YES|Yes) return 0 ;; *) return 1 ;; esac
+}
+display_cmd() {
+  [ -n "$1" ] && printf '%s' "$1" || printf '-'
 }
 
 command -v tmux >/dev/null 2>&1 || die "tmux is required"
@@ -218,13 +220,13 @@ cmd_set() {
     dnm=$(nth "$NAMES" "$i"); ddr=$(nth "$DIRS" "$i"); dcm=$(nth "$CMDS" "$i")
     # header shows the CURRENT values so you always have context while typing.
     printf "\n${B}${CYAN}pane %d of %d${NC}" "$i" "$count" >&2
-    if [ -n "$dnm" ]; then printf "  ${DIM}current: %s | %s | %s${NC}" "$dnm" "${ddr:-.}" "${dcm:-—}" >&2; fi
+    if [ -n "$dnm" ]; then printf "  ${DIM}current: %s | %s | %s${NC}" "$dnm" "${ddr:-.}" "$(display_cmd "$dcm")" >&2; fi
     printf "\n" >&2
     nm=$(ui_input "name:" "${dnm:-pane$i}")
     dr=$(ui_input "dir (relative to repo root):" "${ddr:-.}")
     cm=$(ui_input "command (blank = just a shell):" "$dcm")
     # echo back what was captured (gum clears its own line, so confirm it here).
-    printf "  ${GREEN}✓${NC} ${B}%s${NC} ${GRAY}|${NC} %s ${GRAY}|${NC} %s\n" "$nm" "$dr" "${cm:-${DIM}(shell)${NC}}" >&2
+    printf "  ${GREEN}✓${NC} ${B}%s${NC} ${GRAY}|${NC} %s ${GRAY}|${NC} %s\n" "$nm" "$dr" "$(display_cmd "$cm")" >&2
     body="$body$nm | $dr | $cm
 "
     i=$((i+1))
@@ -232,6 +234,7 @@ cmd_set() {
 
   local include_hunk=0 hunk_default="no"
   [ "$HUNK_ENABLED" = 1 ] && hunk_default="yes"
+  printf "\n" >&2
   if ui_confirm "add a Hunk diff pane - Git changes viewer?" "$hunk_default"; then
     include_hunk=1
   fi
@@ -250,7 +253,7 @@ cmd_set() {
   fi
   printf '%s' "$body" | while IFS='|' read -r sn sd sc; do
     printf "    ${CYAN}%s${NC} ${GRAY}·${NC} %s ${GRAY}·${NC} %s\n" \
-      "$(echo "$sn" | sed 's/ *$//')" "$(echo "$sd" | sed 's/^ *//;s/ *$//')" "$(echo "$sc" | sed 's/^ *//')" >&2
+      "$(echo "$sn" | sed 's/ *$//')" "$(echo "$sd" | sed 's/^ *//;s/ *$//')" "$(display_cmd "$(echo "$sc" | sed 's/^ *//;s/ *$//')")" >&2
   done
   if [ "$include_hunk" = 1 ]; then
     printf "    ${CYAN}%s${NC} ${GRAY}·${NC} %s ${GRAY}·${NC} %s ${DIM}(full screen)${NC}\n" \
@@ -259,15 +262,12 @@ cmd_set() {
   printf "  ${DIM}launch: ${NC}${B}tools dev${NC}\n" >&2
 }
 
-# ---- generic fallback: 2-pane split, offer to save ----
-generic_then_offer_save() {
-  printf "${DIM}no .tools-dev — generic 2-pane split in %s${NC}\n" "$ROOT" >&2
-  NAMES="left
-right"; DIRS=".
-."; CMDS="
-"; N=2
+# ---- first-run path: configure before launch ----
+configure_then_launch() {
+  printf "${DIM}no .tools-dev in %s - configure this dev session first${NC}\n" "$ROOT" >&2
+  cmd_set
+  load_conf || die "no .tools-dev created"
   launch
-  printf "\n${GRAY}tip: run ${NC}${B}tools dev set${NC}${GRAY} to define named panes that auto-run your commands.${NC}\n" >&2
 }
 
 case "${1:-}" in
@@ -277,6 +277,6 @@ case "${1:-}" in
            && printf "${GREEN}✓${NC} stopped %s\n" "$SESSION" >&2 \
            || printf "${GRAY}no '%s' session.${NC}\n" "$SESSION" >&2 ;;
   ""|start)
-         if load_conf; then launch; else generic_then_offer_save; fi ;;
+         if load_conf; then launch; else configure_then_launch; fi ;;
   *)     die "usage: tools dev [set|edit|stop]" ;;
 esac
