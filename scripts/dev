@@ -12,7 +12,10 @@
 #   e.g.
 #     web | ./web | pnpm dev
 #     api | ./api | pnpm start:dev
+#     hunk diff | . | hunk diff --watch
 # Lines starting with # are ignored. `dir` is relative to the repo root.
+# The `hunk diff` entry is special: it launches last in its own tmux window so
+# the Git changes viewer always has the whole screen.
 # No config? -> a generic 2-pane split in the current dir, and you're offered to
 # save it as .tools-dev for next time.
 #
@@ -32,6 +35,20 @@ ui_choose() {  # <header> <newline-opts>
   if [ "$HAS_GUM" = 1 ]; then printf '%s' "$2" | gum choose --header="$1" --cursor="❯ " --cursor.foreground=2 2>/dev/tty
   else printf "${DIM}%s${NC}\n" "$1" >&2; local i=1; printf '%s\n' "$2" | while IFS= read -r o; do [ -n "$o" ] && printf "  %2d %s\n" "$i" "$o" >&2; i=$((i+1)); done
     printf "  number: " >&2; local p; read -r p || true; printf '%s' "$2" | sed -n "${p}p"; fi
+}
+ui_confirm() {  # <prompt> <yes|no default>
+  local default="${2:-no}" opts choice label v
+  if [ "$HAS_GUM" = 1 ]; then
+    if [ "$default" = "yes" ]; then opts="yes
+no"; else opts="no
+yes"; fi
+    choice=$(printf '%s' "$opts" | gum choose --header="$1" --cursor="❯ " --cursor.foreground=2 2>/dev/tty || true)
+    case "$choice" in yes) return 0 ;; *) return 1 ;; esac
+  fi
+  if [ "$default" = "yes" ]; then label="Y/n"; else label="y/N"; fi
+  printf "  %s [%s] " "$1" "$label" >&2
+  read -r v || true
+  case "${v:-$default}" in y|Y|yes|YES|Yes) return 0 ;; *) return 1 ;; esac
 }
 
 command -v tmux >/dev/null 2>&1 || die "tmux is required"
@@ -62,8 +79,20 @@ style() {
 }
 
 # ---- read .tools-dev into parallel arrays (bash 3.2: no assoc) ----
+DEFAULT_HUNK_NAME="hunk diff"
+DEFAULT_HUNK_DIR="."
+DEFAULT_HUNK_CMD="hunk diff --watch"
 NAMES=""; DIRS=""; CMDS=""; N=0
+HUNK_ENABLED=0; HUNK_NAME="$DEFAULT_HUNK_NAME"; HUNK_DIR="$DEFAULT_HUNK_DIR"; HUNK_CMD="$DEFAULT_HUNK_CMD"
+reset_conf_state() {
+  NAMES=""; DIRS=""; CMDS=""; N=0
+  HUNK_ENABLED=0; HUNK_NAME="$DEFAULT_HUNK_NAME"; HUNK_DIR="$DEFAULT_HUNK_DIR"; HUNK_CMD="$DEFAULT_HUNK_CMD"
+}
+is_hunk_entry() {
+  [ "$1" = "$DEFAULT_HUNK_NAME" ]
+}
 load_conf() {
+  reset_conf_state
   [ -f "$CONF" ] || return 1
   while IFS= read -r line; do
     case "$line" in ''|'#'*) continue ;; esac
@@ -72,6 +101,13 @@ load_conf() {
     dr=$(printf '%s' "$line" | awk -F'|' '{gsub(/^ +| +$/,"",$2); print $2}')
     cm=$(printf '%s' "$line" | awk -F'|' '{sub(/^[^|]*\|[^|]*\|/,""); gsub(/^ +| +$/,"",$0); print}')
     [ -n "$nm" ] || continue
+    if is_hunk_entry "$nm"; then
+      HUNK_ENABLED=1
+      HUNK_NAME="$DEFAULT_HUNK_NAME"
+      HUNK_DIR="${dr:-$DEFAULT_HUNK_DIR}"
+      HUNK_CMD="${cm:-$DEFAULT_HUNK_CMD}"
+      continue
+    fi
     NAMES="$NAMES$nm
 "; DIRS="$DIRS$dr
 "; CMDS="$CMDS$cm
@@ -83,6 +119,15 @@ load_conf() {
 nth() { printf '%s\n' "$1" | sed -n "$2p"; }
 
 pdir_of() { local d="$ROOT/$1"; [ -d "$d" ] && echo "$d" || echo "$ROOT"; }
+
+launch_hunk() {
+  [ "$HUNK_ENABLED" = 1 ] || return 0
+  local hdir; hdir=$(pdir_of "$HUNK_DIR")
+  tmux new-window -d -t "$SESSION:" -n "hunk" -c "$hdir"
+  tmux select-pane -t "$SESSION:hunk.0" -T "$HUNK_NAME"
+  tmux send-keys -t "$SESSION:hunk.0" \
+    "clear; if command -v hunk >/dev/null 2>&1; then $HUNK_CMD; else printf 'hunk is not installed.\nInstall with: npm i -g hunkdiff\n        or: brew install modem-dev/tap/hunk\n'; exec \${SHELL:-/bin/sh}; fi" Enter
+}
 
 launch() {
   tmux has-session -t "$SESSION" 2>/dev/null && {
@@ -130,8 +175,14 @@ launch() {
     fi
     i=$((i+1))
   done
-  tmux select-pane -t "$SESSION:.0"
-  printf "${GREEN}✓${NC} dev session ${B}%s${NC} (%d panes)\n" "$SESSION" "$N" >&2
+  launch_hunk
+  if [ "$HUNK_ENABLED" = 1 ]; then
+    tmux select-window -t "$SESSION:hunk"
+    printf "${GREEN}✓${NC} dev session ${B}%s${NC} (%d panes + hunk)\n" "$SESSION" "$N" >&2
+  else
+    tmux select-pane -t "$SESSION:.0"
+    printf "${GREEN}✓${NC} dev session ${B}%s${NC} (%d panes)\n" "$SESSION" "$N" >&2
+  fi
   printf "  ${DIM}reconfigure: ${NC}${B}tools dev set${NC}${DIM}   ·   stop: ${NC}${B}tools dev stop${NC}\n" >&2
 
   # auto-attach — but NOT if already inside tmux (nested attach is refused).
@@ -149,10 +200,13 @@ cmd_set() {
   # pre-fill from the existing config so changing one thing = press Enter through
   # the rest. (load_conf populates NAMES/DIRS/CMDS/N.)
   load_conf || true
-  local cur_n="$N"
-  [ "$cur_n" -gt 0 ] 2>/dev/null && printf "  ${DIM}editing existing (%d panes) — Enter keeps a value${NC}\n" "$cur_n" >&2
+  local cur_n="$N" cur_hunk_suffix=""
+  [ "$HUNK_ENABLED" = 1 ] && cur_hunk_suffix=" + hunk"
+  [ "$cur_n" -gt 0 ] 2>/dev/null && printf "  ${DIM}editing existing (%d panes%s) — Enter keeps a value${NC}\n" "$cur_n" "$cur_hunk_suffix" >&2
 
-  local count; count=$(ui_choose "how many panes?${cur_n:+ (now $cur_n)}" "2
+  local count_header="how many panes?"
+  [ "$cur_n" -gt 0 ] 2>/dev/null && count_header="$count_header (now $cur_n)"
+  local count; count=$(ui_choose "$count_header" "2
 3
 4")
   count="${count%% *}"
@@ -176,15 +230,32 @@ cmd_set() {
     i=$((i+1))
   done
 
+  local include_hunk=0 hunk_default="no"
+  [ "$HUNK_ENABLED" = 1 ] && hunk_default="yes"
+  if ui_confirm "add a Hunk diff pane - Git changes viewer?" "$hunk_default"; then
+    include_hunk=1
+  fi
+
   { printf '# tools dev layout for %s\n' "$(basename "$ROOT")"
     printf '# format: <name> | <dir> | <command>\n'
-    printf '%s' "$body"; } > "$CONF"
+    printf '%s' "$body"
+    if [ "$include_hunk" = 1 ]; then
+      printf '%s | %s | %s\n' "$DEFAULT_HUNK_NAME" "${HUNK_DIR:-$DEFAULT_HUNK_DIR}" "${HUNK_CMD:-$DEFAULT_HUNK_CMD}"
+    fi; } > "$CONF"
   # final summary so you see the whole config at a glance.
-  printf "\n${GREEN}✓${NC} saved ${B}%s${NC} ${DIM}(%d panes)${NC}\n" "$CONF" "$count" >&2
+  if [ "$include_hunk" = 1 ]; then
+    printf "\n${GREEN}✓${NC} saved ${B}%s${NC} ${DIM}(%d panes + hunk)${NC}\n" "$CONF" "$count" >&2
+  else
+    printf "\n${GREEN}✓${NC} saved ${B}%s${NC} ${DIM}(%d panes)${NC}\n" "$CONF" "$count" >&2
+  fi
   printf '%s' "$body" | while IFS='|' read -r sn sd sc; do
     printf "    ${CYAN}%s${NC} ${GRAY}·${NC} %s ${GRAY}·${NC} %s\n" \
       "$(echo "$sn" | sed 's/ *$//')" "$(echo "$sd" | sed 's/^ *//;s/ *$//')" "$(echo "$sc" | sed 's/^ *//')" >&2
   done
+  if [ "$include_hunk" = 1 ]; then
+    printf "    ${CYAN}%s${NC} ${GRAY}·${NC} %s ${GRAY}·${NC} %s ${DIM}(full screen)${NC}\n" \
+      "$DEFAULT_HUNK_NAME" "${HUNK_DIR:-$DEFAULT_HUNK_DIR}" "${HUNK_CMD:-$DEFAULT_HUNK_CMD}" >&2
+  fi
   printf "  ${DIM}launch: ${NC}${B}tools dev${NC}\n" >&2
 }
 
