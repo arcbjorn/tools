@@ -95,6 +95,24 @@ tools dev set         # interactive builder: define 2-4 panes (name | dir | comm
 tools dev stop        # kill this project's dev session
 ```
 
+`tools dev set` also asks whether to add a Hunk diff pane, the Git changes
+viewer from <https://github.com/modem-dev/hunk>. When enabled, `.tools-dev`
+gets a final special entry:
+
+```bash
+hunk diff | . | hunk diff --watch
+```
+
+On launch, normal app panes stay in the first tmux window and the Hunk viewer is
+opened last in its own `hunk` tmux window, so it always has the full terminal
+screen. Hunk must be installed separately:
+
+```bash
+npm i -g hunkdiff
+# or
+brew install modem-dev/tap/hunk
+```
+
 ### AI Assistant Configuration System
 Supports Claude, Codex, Gemini, OpenCode, and Pi. Source of truth is `assistants/source/`; everything else is generated.
 
