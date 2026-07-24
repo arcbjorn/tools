@@ -115,7 +115,7 @@ alias status='tailscale status'
 # covers a lid-open machine -- closing the lid sleeps regardless of assertions.
 stayawake() {
     if pgrep -x caffeinate >/dev/null; then
-        echo "already awake (pid $(pgrep -x caffeinate | tr '\n' ' '))"
+        echo "already awake (pid $(pgrep -x caffeinate | paste -sd' ' -))"
         return
     fi
     nohup caffeinate -dimsu >/dev/null 2>&1 &
