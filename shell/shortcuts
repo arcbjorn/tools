@@ -109,6 +109,24 @@ alias base='_ts_ssh base'
 alias nova='_ts_ssh nova'
 alias status='tailscale status'
 
+# Power shortcuts
+# Hold the machine awake for remote sessions. `caffeinate -t` is deliberately
+# avoided: a timeout lapses mid-session and the box sleeps. Note this only
+# covers a lid-open machine -- closing the lid sleeps regardless of assertions.
+stayawake() {
+    if pgrep -x caffeinate >/dev/null; then
+        echo "already awake (pid $(pgrep -x caffeinate | tr '\n' ' '))"
+        return
+    fi
+    nohup caffeinate -dimsu >/dev/null 2>&1 &
+    disown
+    echo "staying awake (pid $!) - run 'sleepok' to release"
+}
+
+sleepok() {
+    pkill -x caffeinate && echo "sleep re-enabled" || echo "was not held awake"
+}
+
 # Tools shortcuts
 alias wf='workflow'
 
@@ -146,6 +164,13 @@ shortcuts() {
 
     echo "SSH/Network:"
     grep -E "^alias (base|nova|status)" ~/tools/shell/shortcuts | sort | _shortcuts_render
+    echo ""
+
+    echo "Power:"
+    {
+        echo "stayawake='hold laptop awake (lid open)'"
+        echo "sleepok='release sleep hold'"
+    } | _shortcuts_render
     echo ""
 
     echo "Tools:"
